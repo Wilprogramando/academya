@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { imgSrc, gifSrc, isVideoSrc, isCustomEx, figureOf, CATALOGUE_MEDIA } from '../lib/exercises.js'
+import { imgSrc, gifSrc, isVideoSrc, isCustomEx, figureOf } from '../lib/exercises.js'
 import { MOBILE } from '../lib/mobile.js'
 import { useStore } from '../store/useStore.js'
 import { t, exerciseNameFor } from '../lib/i18n.js'
@@ -33,11 +33,15 @@ function BuiltinMedia({ ex, id, compact, minimizable }) {
   const update = useStore(s => s.update)
   const clip = ex.gif && isVideoSrc(gifSrc(ex, body)) ? gifSrc(ex, body) : null
   const clipSrc = useClipInMemory(clip)
-  if (!ex.gif) return null
-  // Build sem a midia do catalogo: o cartao fecha, exatamente como num exercicio sem midia ou com
-  // a animacao desligada nos Ajustes. Melhor que 1.324 tiles neutros, que ocupariam espaco sem
+  // A animacao pode nao existir mesmo havendo foto: o build de fotos (VITE_MEDIA=free) tem
+  // still e nenhum clipe. `anim` e o que de fato anima — clipe de video, ou um gif de imagem
+  // num fork antigo cujo gifSrc nao e video.
+  const still = imgSrc(ex, body)
+  const anim = clip || (ex.gif ? gifSrc(ex, body) : null)
+  // Nada para mostrar: o cartao fecha, exatamente como num exercicio sem midia ou com a animacao
+  // desligada nos Ajustes. Melhor que milhares de tiles neutros, que ocupariam espaco sem
   // informar nada e fariam a tela parecer quebrada em vez de enxuta.
-  if (!CATALOGUE_MEDIA) return null
+  if (!anim && !still) return null
   if (minimizable && gifSize === 'off') return null
   const mini = minimizable && gifSize === 'mini'
   const toggleSize = e => { e.stopPropagation(); update(s => { s.gifSize = mini ? 'full' : 'mini' }) }
@@ -59,13 +63,17 @@ function BuiltinMedia({ ex, id, compact, minimizable }) {
           : showGif && clip
             // the phone app is still reading the clip into memory: the still holds its place
             ? <img decoding="async" draggable={false} src={imgSrc(ex, body)} alt={exerciseNameFor(ex)} />
-          : <img decoding="async" draggable={false} src={showGif ? gifSrc(ex, body) : imgSrc(ex, body)} alt={exerciseNameFor(ex)} onError={onError} />}
+          // Sem clipe: a animacao de imagem de um fork antigo, ou — quando nem isso ha, que e o
+          // caso do build de fotos — a propria foto parada.
+          : <img decoding="async" draggable={false} src={showGif && anim ? anim : still} alt={exerciseNameFor(ex)} onError={onError} />}
       {minimizable && (
         <button className="giftoggle" onClick={toggleSize}>
           <Icon name={mini ? 'expand' : 'minimize'} />{mini ? t('Expand') : t('Minimize')}
         </button>
       )}
-      {!mini && !failed && (
+      {/* "toque para pausar" so faz sentido se algo anima: no build de fotos nao ha o que pausar,
+          e a dica convidaria a um toque que nao faz nada. */}
+      {!mini && !failed && anim && (
         <span className="gifhint">
           <Icon name={playing ? 'pause' : 'play'} />{playing ? t('tap to pause') : t('tap to play')}
         </span>

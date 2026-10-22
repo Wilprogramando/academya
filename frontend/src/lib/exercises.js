@@ -2,6 +2,7 @@ import { EXDB, EXALIAS } from './exercises-data.js'
 import MUSCLE_MAP from './exercise-muscle-map.json' with { type: 'json' }
 import V13_IDS from './catalogue-v13-ids.json' with { type: 'json' }
 import { t, getVersion, exerciseNameSearchText } from './i18n-core.js'
+import { FREE_MEDIA } from './free-media-map.js'
 
 export { EXDB }
 
@@ -203,18 +204,42 @@ const drawing = (ex, figure) => (figure === 'female' ? ex.fv : figure === 'male'
 // requisicoes perdidas e uma piscada por exercicio, mais o prefetch do service worker enchendo o
 // cache de erros. Devolvendo null, quem consome ja trata como "exercicio sem midia", um estado
 // que o app sempre teve (ver Media.jsx) e sabe desenhar.
-// Apontar uma origem propria (VITE_IMG_BASE / VITE_GIF_BASE, ex.: um bucket com videos filmados
-// na academia) religa a midia por si so. Sem isso o VITE_MEDIA=none do .env.static continuaria
-// mandando e a midia nova nao apareceria — com a origem configurada e certa, o que e uma pegadinha
-// que custaria uma tarde para achar.
-export const CATALOGUE_MEDIA = ENV.VITE_MEDIA !== 'none' || !!(ENV.VITE_IMG_BASE || ENV.VITE_GIF_BASE)
-export const imgSrc = (ex, figure) => CATALOGUE_MEDIA
-  ? IMG_BASE + (drawing(ex, figure) ? drawing(ex, figure) + '.webp' : ex.img)
-  : null
+// De onde vem a midia dos exercicios (VITE_MEDIA):
+//
+//   'bundled' (padrao) — os arquivos da Gym visual que vem no repositorio, em exercise-media/.
+//                        Video + foto, 100% do catalogo. E o que roda local e self-hosted.
+//   'free'             — fotos da free-exercise-db (Unlicense / dominio publico), por CDN.
+//                        So foto, sem video, e so os ~10% do catalogo que casaram
+//                        (free-media-map.js). E o que o site publico usa, porque a midia da
+//                        Gym visual e licenciada para o openGym e nao pode ir num site de
+//                        terceiros (catalogue/media/NOTICE.md).
+//   'none'             — nenhuma. O app trata cada exercicio como "sem midia".
+//
+// Apontar VITE_IMG_BASE / VITE_GIF_BASE (ex.: um bucket com videos filmados na propria academia)
+// forca o modo 'bundled' com aquela origem, por cima do que o .env.static diga — sem isso,
+// configurar a origem no Vercel nao surtiria efeito e seria uma pegadinha caríssima de achar.
+const OWN_BASE = !!(ENV.VITE_IMG_BASE || ENV.VITE_GIF_BASE)
+const MEDIA_MODE = OWN_BASE ? 'bundled' : (ENV.VITE_MEDIA || 'bundled')
+
+// jsDelivr em vez de raw.githubusercontent.com: o raw nao e CDN, tem limite de requisicao e o
+// GitHub pede que nao seja usado assim. Sobrescrevivel para quem espelhar as fotos.
+const FREE_BASE = ENV.VITE_FREE_BASE || 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/'
+
+/** Ha midia de catalogo neste build? (Em 'free' ha, mas so para parte dos exercicios.) */
+export const CATALOGUE_MEDIA = MEDIA_MODE !== 'none'
+
+export const imgSrc = (ex, figure) => {
+  if (MEDIA_MODE === 'none') return null
+  if (MEDIA_MODE === 'free') return FREE_MEDIA[ex.id] ? FREE_BASE + FREE_MEDIA[ex.id] : null
+  return IMG_BASE + (drawing(ex, figure) ? drawing(ex, figure) + '.webp' : ex.img)
+}
 const clipFile = f => (CLIP_EXT !== '.mp4' && f.endsWith('.mp4') ? f.slice(0, -4) + CLIP_EXT : f)
-export const gifSrc = (ex, figure) => CATALOGUE_MEDIA
-  ? GIF_BASE + clipFile(drawing(ex, figure) ? drawing(ex, figure) + '.mp4' : ex.gif)
-  : null
+export const gifSrc = (ex, figure) => {
+  // 'free' nao tem animacao: a free-exercise-db e um conjunto de fotos. Devolver null aqui e o
+  // que faz as telas mostrarem a foto parada em vez de pedir um video que nao existe.
+  if (MEDIA_MODE !== 'bundled') return null
+  return GIF_BASE + clipFile(drawing(ex, figure) ? drawing(ex, figure) + '.mp4' : ex.gif)
+}
 // The catalogue's animations are short MP4 loops; a fork's or an older build's may still be GIFs.
 export const isVideoSrc = src => /\.(mp4|webm)(\?|$)/i.test(src || '')
 
