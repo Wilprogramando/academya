@@ -1,0 +1,1088 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0d0f12">
+<title>Academya — sistema de treino para academias</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<meta name="description" content="Academya — o sistema de treino da sua academia no celular do aluno. Ficha montada em minutos, treino guiado, carga que se ajusta sozinha. Hospedado por nós, sem instalar nada.">
+
+<style>
+  /* ───────────────────────────────────────────────────────────────────────
+     Academya — página de vendas
+     Mundo visual: sala de musculação. Grafite de ferro fundido, giz, e o
+     vermelho da anilha de 25 kg como único acento forte. O tema é único e
+     escuro de propósito (é a cor do app e da sala), então tudo é pintado
+     explicitamente — nada herda fundo do navegador.
+     ─────────────────────────────────────────────────────────────────────── */
+  :root {
+    --ferro-900: #0d0f12;   /* chão: ferro fundido */
+    --ferro-850: #111418;
+    --ferro-800: #161b21;   /* superfície */
+    --ferro-700: #1e252d;   /* elevado */
+    --ferro-600: #2b343e;   /* traço */
+    --giz:       #ece8e1;   /* texto: pó de giz, levemente quente */
+    --giz-dim:   #9aa3ad;   /* texto secundário, viés frio */
+    --giz-faint: #69727c;
+    --anilha:    #e03a45;   /* acento: anilha de 25 kg */
+    --anilha-esc:#b4242e;
+    --anilha-luz:#ff6b72;
+    --barra:     #d9b23c;   /* anilha de 15 kg: números e destaques */
+    --ok:        #4ea96b;
+
+    --r-sm: 6px; --r-md: 12px; --r-lg: 20px;
+    --passo: clamp(64px, 9vw, 120px);
+    --borda: 1px solid var(--ferro-600);
+    --sombra: 0 24px 60px -24px rgb(0 0 0 / .8);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--ferro-900);
+    color: var(--giz);
+    font: 400 17px/1.65 "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, .display {
+    font-family: Archivo, "Arial Narrow", system-ui, sans-serif;
+    font-weight: 800;
+    letter-spacing: -.025em;
+    text-wrap: balance;
+    margin: 0;
+    line-height: 1.04;
+  }
+  h1 { font-size: clamp(40px, 7.2vw, 78px); font-weight: 900; }
+  h2 { font-size: clamp(30px, 4.4vw, 50px); }
+  h3 { font-size: clamp(19px, 2vw, 23px); letter-spacing: -.015em; }
+  p  { margin: 0; }
+  a  { color: inherit; }
+
+  /* Etiqueta técnica: a ficha de equipamento parafusada no aparelho. */
+  .etiqueta {
+    font: 600 12px/1 "IBM Plex Mono", ui-monospace, monospace;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--anilha-luz);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .etiqueta::before {
+    content: "";
+    width: 26px; height: 2px;
+    background: var(--anilha);
+  }
+  .etiqueta.neutra { color: var(--giz-faint); }
+  .etiqueta.neutra::before { background: var(--ferro-600); }
+
+  .env { width: min(1180px, 100% - 44px); margin-inline: auto; }
+  .secao { padding-block: var(--passo); position: relative; }
+  .secao--placa { background: var(--ferro-850); border-block: var(--borda); }
+
+  .lede { font-size: clamp(17px, 1.7vw, 20px); color: var(--giz-dim); max-width: 62ch; }
+
+  /* Textura de recartilhado (o serrilhado da barra) — ambiente, quase invisível */
+  .knurl {
+    position: absolute; inset: 0; pointer-events: none; opacity: .055;
+    background:
+      repeating-linear-gradient(68deg, var(--giz) 0 1px, transparent 1px 7px),
+      repeating-linear-gradient(-68deg, var(--giz) 0 1px, transparent 1px 7px);
+    mask-image: radial-gradient(120% 70% at 50% 0%, #000 10%, transparent 72%);
+  }
+
+  /* ── Botões ─────────────────────────────────────────────────────────── */
+  .btn {
+    --fundo: var(--anilha);
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 17px 30px;
+    border: 0; border-radius: var(--r-sm);
+    background: var(--fundo);
+    color: #fff;
+    font: 700 16px/1 Archivo, system-ui, sans-serif;
+    letter-spacing: .01em;
+    text-decoration: none;
+    cursor: pointer;
+    position: relative;
+    isolation: isolate;
+    box-shadow: 0 10px 24px -12px var(--anilha-esc), inset 0 1px 0 rgb(255 255 255 / .22);
+    transition: transform .14s cubic-bezier(.2,.9,.3,1.2), box-shadow .2s, filter .2s;
+  }
+  .btn:hover { transform: translateY(-2px); filter: brightness(1.07); box-shadow: 0 16px 32px -14px var(--anilha-esc), inset 0 1px 0 rgb(255 255 255 / .28); }
+  .btn:active { transform: translateY(1px) scale(.99); }
+  .btn--vazio {
+    --fundo: transparent;
+    color: var(--giz);
+    border: var(--borda);
+    box-shadow: none;
+  }
+  .btn--vazio:hover { background: var(--ferro-700); border-color: var(--giz-faint); filter: none; }
+  .btn--grande { padding: 20px 38px; font-size: 18px; }
+  :where(a, button, summary, details):focus-visible {
+    outline: 2px solid var(--anilha-luz);
+    outline-offset: 3px;
+    border-radius: var(--r-sm);
+  }
+
+  /* ── Barra de navegação ─────────────────────────────────────────────── */
+  .nav {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; gap: 18px;
+    padding: 12px 0;
+    background: color-mix(in srgb, var(--ferro-900) 86%, transparent);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid transparent;
+    transition: border-color .25s, background .25s;
+  }
+  .nav[data-preso="sim"] { border-bottom-color: var(--ferro-600); }
+  .nav .env { display: flex; align-items: center; gap: 18px; }
+  .nav-links { display: flex; gap: 26px; margin-left: auto; }
+  .nav-links a {
+    font: 500 14px/1 "IBM Plex Sans", sans-serif;
+    color: var(--giz-dim); text-decoration: none; padding: 8px 0;
+    position: relative;
+  }
+  .nav-links a::after {
+    content: ""; position: absolute; left: 0; right: 100%; bottom: 0; height: 1.5px;
+    background: var(--anilha); transition: right .25s ease;
+  }
+  .nav-links a:hover { color: var(--giz); }
+  .nav-links a:hover::after { right: 0; }
+  .nav .btn { padding: 11px 20px; font-size: 14px; }
+  @media (max-width: 880px) { .nav-links { display: none; } .nav .btn { margin-left: auto; } }
+
+  /* ── Logo ───────────────────────────────────────────────────────────── */
+  .marca { display: flex; align-items: center; gap: 11px; text-decoration: none; }
+  .marca-nome {
+    font: 800 20px/1 Archivo, system-ui, sans-serif;
+    letter-spacing: -.02em;
+  }
+  .marca-nome b { color: var(--anilha); font-weight: 800; }
+
+  /* A sequência de carregamento da barra: a barra se desenha, as anilhas
+     entram pelas pontas e assentam, o nome sobe letra a letra. Depois a barra
+     respira de leve, como uma barra carregada entorta e volta. */
+  .logo-palco { display: grid; place-items: center; gap: 26px; }
+  .logo-svg { width: min(420px, 78vw); height: auto; overflow: visible; }
+  .lg-barra { stroke: var(--giz); stroke-width: 7; stroke-linecap: round; fill: none; }
+  .lg-anilha { fill: var(--anilha); }
+  .lg-anilha--leve { fill: var(--barra); }
+  .lg-presilha { fill: var(--ferro-600); }
+
+  .anima .lg-barra { stroke-dasharray: 300; stroke-dashoffset: 300; animation: traca .7s .1s cubic-bezier(.65,0,.35,1) forwards; }
+  .anima .lg-peso { opacity: 0; animation: encaixa .5s cubic-bezier(.2,1.5,.4,1) forwards; }
+  .anima .lg-peso--e { transform: translateX(-46px); animation-delay: .62s; }
+  .anima .lg-peso--d { transform: translateX(46px);  animation-delay: .72s; }
+  .anima .lg-conjunto { animation: vergaBarra 5.5s 1.6s ease-in-out infinite; transform-origin: center; }
+
+  @keyframes traca { to { stroke-dashoffset: 0; } }
+  @keyframes encaixa { to { opacity: 1; transform: translateX(0); } }
+  @keyframes vergaBarra {
+    0%, 70%, 100% { transform: scaleY(1); }
+    80% { transform: scaleY(.965); }
+    88% { transform: scaleY(1.02); }
+  }
+
+  .logo-nome {
+    display: flex; gap: .012em;
+    font: 900 clamp(38px, 8.4vw, 88px)/1 Archivo, system-ui, sans-serif;
+    letter-spacing: -.035em;
+  }
+  .logo-nome span { display: inline-block; }
+  .anima .logo-nome span {
+    opacity: 0; transform: translateY(.42em);
+    animation: sobeLetra .52s cubic-bezier(.2,.9,.25,1) forwards;
+  }
+  @keyframes sobeLetra { to { opacity: 1; transform: translateY(0); } }
+
+  /* ── Hero ───────────────────────────────────────────────────────────── */
+  .hero { position: relative; padding-block: clamp(50px, 7vw, 88px) var(--passo); overflow: hidden; }
+  .hero-brilho {
+    position: absolute; left: 50%; top: -340px; translate: -50% 0;
+    width: 1100px; height: 700px; pointer-events: none;
+    background: radial-gradient(50% 50% at 50% 50%, color-mix(in srgb, var(--anilha) 26%, transparent), transparent 70%);
+    filter: blur(28px);
+    animation: brilha 9s ease-in-out infinite;
+  }
+  @keyframes brilha { 0%, 100% { opacity: .55; } 50% { opacity: .95; } }
+
+  .hero-texto { max-width: 920px; margin-inline: auto; text-align: center; display: grid; gap: 26px; justify-items: center; }
+  .hero h1 em { font-style: normal; color: var(--anilha); }
+  .hero-acoes { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; }
+  .selo-linha {
+    display: flex; flex-wrap: wrap; gap: 8px 22px; justify-content: center;
+    font: 500 14px/1.4 "IBM Plex Sans", sans-serif; color: var(--giz-faint);
+  }
+  .selo-linha span { display: inline-flex; align-items: center; gap: 7px; }
+  .selo-linha svg { width: 15px; height: 15px; flex: none; color: var(--ok); }
+
+  /* ── Números ────────────────────────────────────────────────────────── */
+  .numeros {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border: var(--borda); border-radius: var(--r-md);
+    background: var(--ferro-800);
+    overflow: hidden;
+  }
+  .numeros div { padding: 26px 22px; border-left: var(--borda); }
+  .numeros div:first-child { border-left: 0; }
+  .numeros b {
+    display: block;
+    font: 900 clamp(30px, 3.8vw, 46px)/1 Archivo, system-ui, sans-serif;
+    letter-spacing: -.03em;
+    font-variant-numeric: tabular-nums;
+    color: var(--giz);
+  }
+  .numeros small { display: block; margin-top: 8px; color: var(--giz-dim); font-size: 14px; line-height: 1.4; }
+  @media (max-width: 760px) {
+    .numeros { grid-template-columns: repeat(2, 1fr); }
+    .numeros div:nth-child(3) { border-left: 0; }
+    .numeros div:nth-child(n+3) { border-top: var(--borda); }
+  }
+
+  /* ── Grades genéricas ───────────────────────────────────────────────── */
+  .cabeca { display: grid; gap: 18px; max-width: 760px; margin-bottom: 52px; }
+  .grade { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); }
+
+  .cartao {
+    background: var(--ferro-800);
+    border: var(--borda);
+    border-radius: var(--r-md);
+    padding: 30px 28px;
+    display: grid; gap: 12px; align-content: start;
+    position: relative;
+    transition: border-color .25s, transform .25s, background .25s;
+  }
+  .cartao:hover { border-color: var(--ferro-600); transform: translateY(-3px); background: var(--ferro-700); }
+  .cartao p { color: var(--giz-dim); font-size: 15.5px; }
+  .cartao .ico {
+    width: 42px; height: 42px; border-radius: 10px;
+    display: grid; place-items: center;
+    background: color-mix(in srgb, var(--anilha) 16%, transparent);
+    color: var(--anilha-luz);
+    margin-bottom: 4px;
+  }
+  .cartao .ico svg { width: 21px; height: 21px; }
+
+  /* Cartões do problema: o que a academia vive hoje */
+  .dor { border-color: color-mix(in srgb, var(--anilha) 22%, var(--ferro-600)); }
+  .dor .ico { background: color-mix(in srgb, var(--anilha) 12%, transparent); }
+
+  /* ── Passos ─────────────────────────────────────────────────────────── */
+  .passos { display: grid; gap: 26px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); counter-reset: p; }
+  .passo { display: grid; gap: 12px; align-content: start; padding-top: 26px; border-top: 2px solid var(--ferro-600); position: relative; }
+  .passo::before {
+    counter-increment: p; content: counter(p, decimal-leading-zero);
+    position: absolute; top: -13px; left: 0;
+    background: var(--ferro-900); padding-right: 12px;
+    font: 600 13px/1 "IBM Plex Mono", monospace; color: var(--anilha); letter-spacing: .1em;
+  }
+  .secao--placa .passo::before { background: var(--ferro-850); }
+  .passo p { color: var(--giz-dim); font-size: 15.5px; }
+
+  /* ── Demonstração: a tela do aluno durante o treino ─────────────────── */
+  .demo { display: grid; grid-template-columns: 1.05fr .95fr; gap: clamp(32px, 5vw, 72px); align-items: center; }
+  @media (max-width: 920px) { .demo { grid-template-columns: 1fr; } }
+
+  .fone {
+    width: min(330px, 86vw); margin-inline: auto;
+    background: var(--ferro-900);
+    border: 9px solid #05070a;
+    border-radius: 36px;
+    box-shadow: var(--sombra), 0 0 0 1px var(--ferro-600);
+    padding: 16px 14px 20px;
+    position: relative;
+    animation: flutua 7s ease-in-out infinite;
+  }
+  @keyframes flutua { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+  .fone::before {
+    content: ""; position: absolute; top: 7px; left: 50%; translate: -50% 0;
+    width: 86px; height: 5px; border-radius: 99px; background: #05070a;
+  }
+  .fone-topo { display: flex; align-items: baseline; justify-content: space-between; margin: 12px 4px 14px; }
+  .fone-topo b { font: 800 19px/1 Archivo, sans-serif; letter-spacing: -.02em; }
+  .fone-topo span { font: 500 12px/1 "IBM Plex Mono", monospace; color: var(--giz-faint); }
+
+  .ex-bloco { background: var(--ferro-800); border: var(--borda); border-radius: 14px; padding: 14px; }
+  .ex-topo { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .ex-fig {
+    width: 42px; height: 42px; border-radius: 9px; flex: none;
+    background: var(--ferro-700); display: grid; place-items: center; color: var(--giz-dim);
+  }
+  .ex-fig svg { width: 22px; height: 22px; animation: levanta 2.4s ease-in-out infinite; }
+  @keyframes levanta { 0%, 100% { transform: translateY(1.5px); } 50% { transform: translateY(-1.5px); } }
+  .ex-nome { font: 600 15px/1.25 "IBM Plex Sans", sans-serif; }
+  .ex-meta { font: 500 12px/1.3 "IBM Plex Mono", monospace; color: var(--giz-faint); margin-top: 3px; }
+
+  .serie {
+    display: grid; grid-template-columns: 22px 1fr auto;
+    align-items: center; gap: 10px;
+    padding: 9px 2px; border-top: 1px solid var(--ferro-700);
+    font-variant-numeric: tabular-nums;
+  }
+  .serie i {
+    font: 600 11px/1 "IBM Plex Mono", monospace; font-style: normal;
+    color: var(--giz-faint);
+  }
+  .serie b { font: 600 15px/1 "IBM Plex Sans", sans-serif; }
+  .serie u { text-decoration: none; color: var(--giz-faint); font-size: 13px; }
+  .marca-ok {
+    width: 22px; height: 22px; border-radius: 50%;
+    border: 1.5px solid var(--ferro-600);
+    display: grid; place-items: center;
+    color: transparent;
+    transition: background .3s, border-color .3s, color .3s, transform .3s;
+  }
+  .serie[data-feita="sim"] .marca-ok {
+    background: var(--ok); border-color: var(--ok); color: #06140b; transform: scale(1.06);
+  }
+  .serie[data-feita="sim"] b { color: var(--giz-dim); }
+  .marca-ok svg { width: 12px; height: 12px; }
+
+  .cargafala {
+    margin-top: 12px; padding: 11px 13px; border-radius: 10px;
+    background: color-mix(in srgb, var(--barra) 13%, transparent);
+    border: 1px solid color-mix(in srgb, var(--barra) 30%, transparent);
+    font: 500 13px/1.45 "IBM Plex Sans", sans-serif; color: var(--barra);
+  }
+  .descanso {
+    margin-top: 12px; display: flex; align-items: center; gap: 11px;
+    font: 600 13px/1 "IBM Plex Mono", monospace; color: var(--giz-dim);
+  }
+  .descanso .trilho { flex: 1; height: 5px; border-radius: 99px; background: var(--ferro-700); overflow: hidden; }
+  .descanso .preenche { height: 100%; width: 0%; background: var(--anilha); border-radius: 99px; }
+
+  .demo-lista { display: grid; gap: 22px; }
+  .demo-item { display: grid; grid-template-columns: 30px 1fr; gap: 16px; align-items: start; }
+  .demo-item .ponto {
+    width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+    background: color-mix(in srgb, var(--anilha) 16%, transparent); color: var(--anilha-luz);
+  }
+  .demo-item .ponto svg { width: 15px; height: 15px; }
+  .demo-item p { color: var(--giz-dim); font-size: 15.5px; margin-top: 5px; }
+
+  /* ── Comparativo ────────────────────────────────────────────────────── */
+  .rolavel { overflow-x: auto; border: var(--borda); border-radius: var(--r-md); background: var(--ferro-800); }
+  table { width: 100%; border-collapse: collapse; min-width: 620px; }
+  th, td { padding: 16px 20px; text-align: left; border-top: var(--borda); font-size: 15px; }
+  thead th { border-top: 0; font: 600 12px/1 "IBM Plex Mono", monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--giz-faint); }
+  thead th.nos { color: var(--anilha-luz); }
+  tbody th { font-weight: 500; color: var(--giz); }
+  td { color: var(--giz-dim); }
+  td.nos { color: var(--giz); background: color-mix(in srgb, var(--anilha) 7%, transparent); font-weight: 500; }
+  td svg { width: 15px; height: 15px; vertical-align: -2px; margin-right: 8px; }
+  td.nos svg { color: var(--ok); }
+  td.eles svg { color: var(--giz-faint); }
+
+  /* ── Planos ─────────────────────────────────────────────────────────── */
+  .planos { display: grid; grid-template-columns: 1.15fr .85fr; gap: 22px; align-items: stretch; }
+  @media (max-width: 880px) { .planos { grid-template-columns: 1fr; } }
+  .plano {
+    position: relative; overflow: hidden;
+    background: var(--ferro-800); border: 1px solid var(--ferro-600);
+    border-radius: var(--r-lg); padding: clamp(30px, 4vw, 44px);
+    display: grid; gap: 22px; align-content: start;
+  }
+  .plano--destaque { border-color: var(--anilha); box-shadow: 0 0 0 1px var(--anilha), var(--sombra); }
+  .plano--destaque::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(90% 60% at 0% 0%, color-mix(in srgb, var(--anilha) 13%, transparent), transparent 60%);
+  }
+  .plano-faixa {
+    position: absolute; top: 20px; right: -42px; rotate: 38deg;
+    background: var(--anilha); color: #fff;
+    font: 700 11px/1 "IBM Plex Mono", monospace; letter-spacing: .14em;
+    padding: 7px 50px;
+  }
+  .preco { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .preco .valor {
+    font: 900 clamp(42px, 6vw, 62px)/1 Archivo, system-ui, sans-serif;
+    letter-spacing: -.04em; font-variant-numeric: tabular-nums;
+  }
+  .preco .periodo { color: var(--giz-dim); font-size: 16px; }
+  .preco .antes { color: var(--giz-faint); text-decoration: line-through; font-size: 17px; }
+  .inclui { display: grid; gap: 11px; list-style: none; padding: 0; margin: 0; }
+  .inclui li { display: grid; grid-template-columns: 20px 1fr; gap: 11px; align-items: start; font-size: 15.5px; color: var(--giz-dim); }
+  .inclui li b { color: var(--giz); font-weight: 600; }
+  .inclui svg { width: 15px; height: 15px; margin-top: 5px; color: var(--ok); }
+  .plano .btn { width: 100%; }
+  .nota-fina { font-size: 13.5px; color: var(--giz-faint); text-align: center; }
+
+  .garantia { display: grid; gap: 14px; align-content: center; }
+  .garantia .escudo {
+    width: 52px; height: 52px; border-radius: 13px; display: grid; place-items: center;
+    background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok);
+  }
+  .garantia .escudo svg { width: 25px; height: 25px; }
+  .garantia p { color: var(--giz-dim); font-size: 15.5px; }
+
+  /* ── Entrega ────────────────────────────────────────────────────────── */
+  .entrega { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+  .entrega .cartao { text-align: left; }
+  .carta {
+    border: 1px dashed var(--ferro-600); border-radius: var(--r-md);
+    padding: 22px 24px; background: var(--ferro-850);
+    font: 500 14px/1.7 "IBM Plex Mono", monospace; color: var(--giz-dim);
+    max-width: 560px;
+  }
+  .carta b { color: var(--giz); font-weight: 600; }
+  .carta .de { color: var(--giz-faint); font-size: 12.5px; letter-spacing: .06em; text-transform: uppercase; display: block; margin-bottom: 10px; }
+
+  /* ── FAQ ────────────────────────────────────────────────────────────── */
+  .faq { display: grid; gap: 0; border-top: var(--borda); max-width: 820px; }
+  details { border-bottom: var(--borda); }
+  summary {
+    cursor: pointer; list-style: none;
+    padding: 22px 44px 22px 0; position: relative;
+    font: 600 17px/1.4 "IBM Plex Sans", sans-serif;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::after {
+    content: ""; position: absolute; right: 8px; top: 50%; width: 13px; height: 13px;
+    margin-top: -7px;
+    border-right: 2px solid var(--anilha); border-bottom: 2px solid var(--anilha);
+    rotate: 45deg; transition: rotate .25s ease;
+  }
+  details[open] summary::after { rotate: -135deg; }
+  details p { padding-bottom: 24px; color: var(--giz-dim); max-width: 68ch; font-size: 15.5px; }
+  details[open] p { animation: abre .3s ease; }
+  @keyframes abre { from { opacity: 0; transform: translateY(-6px); } }
+
+  /* ── Chamada final ──────────────────────────────────────────────────── */
+  .final { position: relative; overflow: hidden; text-align: center; }
+  .final .env { display: grid; gap: 26px; justify-items: center; position: relative; }
+  .final h2 { max-width: 15ch; }
+
+  footer {
+    border-top: var(--borda); padding-block: 44px;
+    color: var(--giz-faint); font-size: 14px;
+  }
+  footer .env { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; justify-content: space-between; }
+  footer a { color: var(--giz-dim); text-decoration: none; }
+  footer a:hover { color: var(--giz); }
+
+  /* ── Revelação no rolar ─────────────────────────────────────────────── */
+  .rev { opacity: 0; transform: translateY(22px); transition: opacity .6s ease, transform .6s cubic-bezier(.2,.8,.3,1); }
+  .rev.visivel { opacity: 1; transform: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .rev { opacity: 1; transform: none; }
+    .anima .lg-barra { stroke-dashoffset: 0; }
+    .anima .lg-peso, .anima .logo-nome span { opacity: 1; transform: none; }
+  }
+</style>
+<meta property="og:title" content="Academya — a ficha de treino da sua academia no celular do aluno">
+<meta property="og:description" content="Ficha montada em minutos, treino guiado com demonstração animada e carga que se ajusta sozinha. Hospedado por nós: você não instala nada.">
+<meta property="og:type" content="website">
+<meta name="robots" content="index, follow">
+</head>
+<body>
+
+<header class="nav" id="nav">
+  <div class="env">
+    <a class="marca" href="#topo" aria-label="Academya, início">
+      <svg width="30" height="20" viewBox="0 0 120 56" aria-hidden="true">
+        <path class="lg-barra" d="M18 28 H102" style="stroke-dasharray:none;stroke-dashoffset:0" />
+        <rect class="lg-anilha" x="26" y="10" width="11" height="36" rx="3" />
+        <rect class="lg-anilha" x="83" y="10" width="11" height="36" rx="3" />
+        <rect class="lg-anilha--leve" x="42" y="17" width="9" height="22" rx="3" />
+        <rect class="lg-anilha--leve" x="69" y="17" width="9" height="22" rx="3" />
+      </svg>
+      <span class="marca-nome">Academ<b>ya</b></span>
+    </a>
+    <nav class="nav-links">
+      <a href="#sistema">O sistema</a>
+      <a href="#recursos">Recursos</a>
+      <a href="#planos">Planos</a>
+      <a href="#perguntas">Perguntas</a>
+    </nav>
+    <a class="btn" href="#planos" data-cta="topo">Assinar</a>
+  </div>
+</header>
+
+<main id="topo">
+
+  <!-- ── Hero ──────────────────────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="hero-brilho" aria-hidden="true"></div>
+    <div class="knurl" aria-hidden="true"></div>
+    <div class="env hero-texto">
+
+      <div class="logo-palco" id="palco">
+        <svg class="logo-svg" viewBox="0 0 420 120" role="img" aria-label="Academya">
+          <g class="lg-conjunto">
+            <path class="lg-barra" d="M70 60 H350" />
+            <g class="lg-peso lg-peso--e">
+              <rect class="lg-anilha" x="96" y="18" width="24" height="84" rx="7" />
+              <rect class="lg-anilha--leve" x="128" y="33" width="18" height="54" rx="6" />
+              <rect class="lg-presilha" x="152" y="44" width="9" height="32" rx="4" />
+            </g>
+            <g class="lg-peso lg-peso--d">
+              <rect class="lg-anilha" x="300" y="18" width="24" height="84" rx="7" />
+              <rect class="lg-anilha--leve" x="274" y="33" width="18" height="54" rx="6" />
+              <rect class="lg-presilha" x="259" y="44" width="9" height="32" rx="4" />
+            </g>
+          </g>
+        </svg>
+        <div class="logo-nome" id="nomeLogo" aria-label="Academya"></div>
+      </div>
+
+      <h1>A ficha de treino da sua academia <em>no celular do aluno</em>.</h1>
+
+      <p class="lede" style="text-align:center">
+        O professor monta o treino em minutos. O aluno abre o celular e é conduzido série a série,
+        com demonstração animada, cronômetro de descanso e a carga de cada exercício já preenchida.
+        Hospedado por nós: você não instala nada, não mantém servidor nenhum.
+      </p>
+
+      <div class="hero-acoes">
+        <a class="btn btn--grande" href="#planos" data-cta="hero">Quero na minha academia</a>
+        <a class="btn btn--vazio btn--grande" href="#sistema">Ver como funciona</a>
+      </div>
+
+      <div class="selo-linha">
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 13 4 4L19 7"/></svg> Acesso em minutos após o pagamento</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 13 4 4L19 7"/></svg> Sem fidelidade, cancele quando quiser</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 13 4 4L19 7"/></svg> Alunos ilimitados</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Números ───────────────────────────────────────────────────────── -->
+  <section class="env" style="padding-bottom:var(--passo)">
+    <div class="numeros rev">
+      <div><b data-contar="5600" data-sufixo="+">0</b><small>exercícios com demonstração animada</small></div>
+      <div><b data-contar="4">0</b><small>modelos de progressão de carga automática</small></div>
+      <div><b data-contar="19">0</b><small>idiomas, com os exercícios traduzidos</small></div>
+      <div><b>0</b><small>anúncios, e nenhum dado vendido a ninguém</small></div>
+    </div>
+  </section>
+
+  <!-- ── Problema ──────────────────────────────────────────────────────── -->
+  <section class="secao secao--placa" id="problema">
+    <div class="env">
+      <div class="cabeca rev">
+        <span class="etiqueta">Hoje, na sua academia</span>
+        <h2>A ficha de papel é o maior buraco na experiência do aluno.</h2>
+        <p class="lede">
+          Não é o aparelho, não é o ar-condicionado. É o aluno parado no meio da sala sem saber
+          quanto levantou na semana passada — e o professor refazendo a mesma planilha pela décima vez.
+        </p>
+      </div>
+      <div class="grade">
+        <article class="cartao dor rev">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h11l5 5v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z"/><path d="M14 4v6h6"/><path d="m8 13 8 6M16 13l-8 6"/></svg></div>
+          <h3>A ficha some, molha, fica em casa</h3>
+          <p>E com ela some o histórico inteiro: carga, repetições, o que já foi progredido. O aluno chuta o peso e repete o mesmo treino por meses.</p>
+        </article>
+        <article class="cartao dor rev">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+          <h3>O professor vira digitador</h3>
+          <p>Horas por semana montando planilha, recalculando carga e reimprimindo ficha — tempo que não vira atendimento na sala, que é o que o aluno percebe.</p>
+        </article>
+        <article class="cartao dor rev">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18"/><path d="M3 8h18"/><path d="M7 21V8M17 21V8"/></svg></div>
+          <h3>O aplicativo genérico cobra do seu aluno</h3>
+          <p>Ele leva o aluno para dentro de uma assinatura que não é sua, fica com o histórico de treino dele e ainda mostra anúncio de outra academia.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Como funciona + demonstração ──────────────────────────────────── -->
+  <section class="secao" id="sistema">
+    <div class="knurl" aria-hidden="true" style="opacity:.03"></div>
+    <div class="env">
+      <div class="cabeca rev">
+        <span class="etiqueta">Como funciona</span>
+        <h2>Monta, treina, progride. Sem planilha em nenhuma etapa.</h2>
+      </div>
+
+      <div class="demo">
+        <div class="rev">
+          <div class="fone" aria-hidden="true">
+            <div class="fone-topo"><b>Treino A · Peito</b><span id="relogioFone">19:12</span></div>
+
+            <div class="ex-bloco">
+              <div class="ex-topo">
+                <div class="ex-fig">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6M8 7v10M16 7v10M20 9v6M8 12h8"/></svg>
+                </div>
+                <div>
+                  <div class="ex-nome">Supino reto com barra</div>
+                  <div class="ex-meta">4 × 8 · descanso 90s</div>
+                </div>
+              </div>
+
+              <div class="serie" data-serie="1"><i>1</i><b>60 kg × 8</b><u>RIR 2</u><span class="marca-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2"><path d="m5 13 4 4L19 7"/></svg></span></div>
+              <div class="serie" data-serie="2"><i>2</i><b>60 kg × 8</b><u>RIR 2</u><span class="marca-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2"><path d="m5 13 4 4L19 7"/></svg></span></div>
+              <div class="serie" data-serie="3"><i>3</i><b>60 kg × 8</b><u>RIR 1</u><span class="marca-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2"><path d="m5 13 4 4L19 7"/></svg></span></div>
+              <div class="serie" data-serie="4"><i>4</i><b>60 kg × 8</b><u>RIR 1</u><span class="marca-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2"><path d="m5 13 4 4L19 7"/></svg></span></div>
+
+              <div class="descanso"><span id="contaDescanso">90s</span><span class="trilho"><span class="preenche" id="barraDescanso"></span></span></div>
+              <div class="cargafala" id="falaCarga">Fechou as 4 séries: na próxima o sistema sobe para 62,5 kg.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="demo-lista">
+          <div class="demo-item rev">
+            <span class="ponto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg></span>
+            <div>
+              <h3>O professor monta a ficha em minutos</h3>
+              <p>Busca entre mais de 5.600 exercícios, filtra pelos aparelhos que a sua sala tem de fato e arrasta para o dia da semana. Quatro planos prontos (Push/Pull/Legs, Upper/Lower, Full Body, 5×5) entram como ficha editável, se quiser começar de algo.</p>
+            </div>
+          </div>
+          <div class="demo-item rev">
+            <span class="ponto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M8 5v14l11-7z"/></svg></span>
+            <div>
+              <h3>O aluno é conduzido série a série</h3>
+              <p>O treino do dia abre sozinho, com a carga da última vez já preenchida e a demonstração animada do exercício. Ele marca a série, o cronômetro de descanso dispara e a tela fica acesa até o fim.</p>
+            </div>
+          </div>
+          <div class="demo-item rev">
+            <span class="ponto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m4 17 5-5 4 4 7-8"/><path d="M15 8h5v5"/></svg></span>
+            <div>
+              <h3>A carga sobe sozinha — e com critério</h3>
+              <p>Progressão linear, Greyskull LP, progressão dupla ou tripla: o sistema escolhe o próximo alvo e explica por que é aquele número. Série falhada nunca aumenta o peso, e repetir o travamento dispara um deload.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Recursos ──────────────────────────────────────────────────────── -->
+  <section class="secao secao--placa" id="recursos">
+    <div class="env">
+      <div class="cabeca rev">
+        <span class="etiqueta">O que vem dentro</span>
+        <h2>Tudo o que a sala precisa, e nada que atrapalhe o treino.</h2>
+      </div>
+      <div class="grade">
+        <article class="cartao rev">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div>
+          <h3>Mais de 5.600 exercícios animados</h3>
+          <p>Busca por nome, por músculo num mapa do corpo e por equipamento. O aluno vê o movimento antes de fazer, em vez de imitar o vizinho.</p>
+        </article>
+        <article class="cartao rev">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5M9 19v-8M14 19v-5M19 19V9"/></svg></div>
+          <h3>Evolução que o aluno enxerga</h3>
+          <p>1RM estimado por exercício, recordes detectados na hora, mapa de calor do ano e gráfico de peso corporal com linha de meta. É o que segura a matrícula.</p>
+        </article>
+        <article class="cartao rev">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+          <h3>Cronômetro e tela acesa</h3>
+          <p>Descanso por exercício, aviso quando acaba — com flash para academia barulhenta — e a tela que não apaga no meio da série.</p>
+        </article>
+        <article class="cartao rev">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6M8 7v10M16 7v10M20 9v6M8 12h8"/></svg></div>
+          <h3>Séries do jeito que você prescreve</h3>
+          <p>Bi-set, aquecimento, drop set, rest-pause, pirâmide, isometria por tempo, cardio por tempo e velocidade, deload planejado. E cálculo de anilhas pela barra e pelas placas que a sua sala tem.</p>
+        </article>
+        <article class="cartao rev">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div>
+          <h3>Entra com a digital ou o rosto</h3>
+          <p>Login por passkey (Face ID, Touch ID, digital): nada de senha anotada na recepção. Cada aluno tem o próprio perfil, sincronizado entre celular e computador.</p>
+        </article>
+        <article class="cartao rev">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 3v9h9"/></svg></div>
+          <h3>Funciona no subsolo</h3>
+          <p>Instala na tela inicial como aplicativo e treina sem internet — o celular guarda tudo e sincroniza quando o sinal volta. Academia em subsolo não trava o treino.</p>
+        </article>
+        <article class="cartao rev">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18M3 12h18M3 17h18"/></svg></div>
+          <h3>Traz o histórico de onde o aluno veio</h3>
+          <p>Importa de FitNotes, Strong e Hevy, além de peso do Apple Health. Quem vinha de outro app não começa do zero — e por isso não desiste na primeira semana.</p>
+        </article>
+        <article class="cartao rev">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v16M4 8l8-4 8 4"/><circle cx="12" cy="14" r="3"/></svg></div>
+          <h3>Painel do dono</h3>
+          <p>Cadastro por convite, registro de atividade e exportação de tudo em um arquivo, quando você quiser. Os dados da sua base são seus, em qualquer cenário.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Comparativo ───────────────────────────────────────────────────── -->
+  <section class="secao">
+    <div class="env">
+      <div class="cabeca rev">
+        <span class="etiqueta">Comparando honestamente</span>
+        <h2>Papel, aplicativo genérico e Academya.</h2>
+      </div>
+      <div class="rolavel rev">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">&nbsp;</th>
+              <th scope="col">Ficha de papel ou planilha</th>
+              <th scope="col">Aplicativo genérico de treino</th>
+              <th scope="col" class="nos">Academya</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Quem paga</th>
+              <td class="eles">Impressão e horas do professor</td>
+              <td class="eles">O aluno, numa assinatura que não é sua</td>
+              <td class="nos">A academia, uma mensalidade só</td>
+            </tr>
+            <tr>
+              <th scope="row">Histórico do aluno</th>
+              <td class="eles">Na folha que ele esqueceu em casa</td>
+              <td class="eles">No servidor da empresa do app</td>
+              <td class="nos">No seu sistema, exportável quando quiser</td>
+            </tr>
+            <tr>
+              <th scope="row">Demonstração do exercício</th>
+              <td class="eles">Desenho na ficha, quando tem</td>
+              <td class="eles">Parte no plano pago</td>
+              <td class="nos">Mais de 5.600, animadas, em todos</td>
+            </tr>
+            <tr>
+              <th scope="row">Ajuste de carga</th>
+              <td class="eles">Na memória do professor</td>
+              <td class="eles">Manual, na mão do aluno</td>
+              <td class="nos">Automático, com 4 modelos de progressão</td>
+            </tr>
+            <tr>
+              <th scope="row">Marca que aparece para o aluno</th>
+              <td class="eles">A sua, no papel</td>
+              <td class="eles">A do app, com anúncios</td>
+              <td class="nos">A sua, sem anúncio nenhum</td>
+            </tr>
+            <tr>
+              <th scope="row">Começar a usar</th>
+              <td class="eles">Imediato, e é só isso de bom</td>
+              <td class="eles">Cada aluno baixa e se vira</td>
+              <td class="nos">Acesso em minutos, nós configuramos</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Planos ────────────────────────────────────────────────────────── -->
+  <section class="secao secao--placa" id="planos">
+    <div class="env">
+      <div class="cabeca rev">
+        <span class="etiqueta">Plano</span>
+        <h2>Uma mensalidade. Alunos ilimitados.</h2>
+        <p class="lede">Sem taxa por aluno, sem cobrar nada do seu aluno, sem fidelidade. Se não servir, você cancela e leva os dados com você.</p>
+      </div>
+
+      <div class="planos">
+        <article class="plano plano--destaque rev">
+          <span class="plano-faixa">MENSAL</span>
+          <div>
+            <h3 style="font-size:22px">Academya Hospedado</h3>
+            <p style="color:var(--giz-dim);font-size:15.5px;margin-top:8px">Nós rodamos o sistema. Você recebe o endereço da sua academia pronto, com a sua configuração.</p>
+          </div>
+          <div class="preco">
+            <span class="antes" id="precoAntes" hidden></span>
+            <span class="valor" id="precoValor">Sob consulta</span>
+            <span class="periodo" id="precoPeriodo" hidden>/mês</span>
+          </div>
+          <ul class="inclui">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 13 4 4L19 7"/></svg><span><b>Alunos ilimitados</b> e professores ilimitados</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 13 4 4L19 7"/></svg><span>Mais de <b>5.600 exercícios</b> com demonstração animada</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 13 4 4L19 7"/></svg><span><b>Configuração inicial feita por nós</b>, com as fichas que você já usa</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 13 4 4L19 7"/></svg><span>Atualizações e backup <b>incluídos</b></span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 13 4 4L19 7"/></svg><span>Suporte por WhatsApp em dia útil</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 13 4 4L19 7"/></svg><span>Exportação completa dos dados <b>quando quiser</b></span></li>
+          </ul>
+          <a class="btn btn--grande" id="botaoCompra" href="#contato" data-cta="plano">Assinar agora</a>
+          <p class="nota-fina" id="notaCompra">Pix ou cartão. O acesso chega por e-mail em poucos minutos.</p>
+        </article>
+
+        <aside class="plano garantia rev">
+          <div class="escudo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 5 6v6c0 4.4 3 8.2 7 9 4-.8 7-4.6 7-9V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg></div>
+          <h3>7 dias para desistir, por lei e por garantia</h3>
+          <p>
+            Compra feita pela internet tem 7 dias de arrependimento garantidos pelo Código de Defesa
+            do Consumidor. Nós não complicamos: dentro desse prazo você pede o cancelamento e
+            devolvemos o valor integral, sem questionário.
+          </p>
+          <p style="margin-top:4px">
+            Depois disso, segue sem fidelidade: cancela no mês que quiser, e a exportação dos dados
+            continua disponível.
+          </p>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Entrega ───────────────────────────────────────────────────────── -->
+  <section class="secao" id="contato">
+    <div class="env">
+      <div class="cabeca rev">
+        <span class="etiqueta">Depois do pagamento</span>
+        <h2>Como o acesso chega até você.</h2>
+      </div>
+      <div class="passos rev" style="margin-bottom:38px">
+        <div class="passo">
+          <h3>Você paga por Pix ou cartão</h3>
+          <p>O botão abre o checkout seguro. No Pix, a confirmação é quase instantânea; no cartão, assim que a operadora aprova.</p>
+        </div>
+        <div class="passo">
+          <h3>Chega o e-mail com tudo</h3>
+          <p>Endereço da sua academia no sistema, o acesso de administrador e o passo a passo do primeiro treino cadastrado.</p>
+        </div>
+        <div class="passo">
+          <h3>Nós ligamos para configurar</h3>
+          <p>Levamos as fichas que você já usa para dentro do sistema e deixamos a sala rodando. Você não monta nada sozinho.</p>
+        </div>
+      </div>
+
+      <div class="carta rev">
+        <span class="de">E-mail que você recebe</span>
+        <b>Assunto: Sua academia está no ar 💪</b><br>
+        Endereço: <b>sua-academia.academya.app</b><br>
+        Usuário administrador: <b>o e-mail desta compra</b><br>
+        Primeiro passo: cadastre o professor e monte o Treino A<br>
+        Suporte: responda este e-mail e nós assumimos daqui.
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Perguntas ─────────────────────────────────────────────────────── -->
+  <section class="secao secao--placa" id="perguntas">
+    <div class="env">
+      <div class="cabeca rev">
+        <span class="etiqueta neutra">Perguntas</span>
+        <h2>O que todo dono de academia pergunta antes.</h2>
+      </div>
+      <div class="faq rev">
+        <details>
+          <summary>Preciso instalar alguma coisa ou ter servidor?</summary>
+          <p>Não. Nós hospedamos: você recebe um endereço na internet e abre no navegador do computador da recepção e no celular dos alunos. Quem quiser instala na tela inicial e fica igual a um aplicativo, inclusive funcionando sem internet durante o treino.</p>
+        </details>
+        <details>
+          <summary>Meu aluno precisa pagar alguma coisa?</summary>
+          <p>Não. A mensalidade é da academia e cobre alunos ilimitados. O aluno não vê anúncio, não cria conta em empresa nenhuma e não é convidado a assinar nada.</p>
+        </details>
+        <details>
+          <summary>Quantos alunos cabem?</summary>
+          <p>Não há limite de alunos nem de professores no plano. Se a sua rede tiver várias unidades e você quiser separar o acesso por unidade, fale com a gente que ajustamos.</p>
+        </details>
+        <details>
+          <summary>E os dados dos meus alunos?</summary>
+          <p>São seus. Nada é vendido, nada vira anúncio e não existe rastreamento de terceiros dentro do sistema. A exportação completa, em um arquivo só, fica disponível para você a qualquer momento — inclusive no dia em que decidir sair.</p>
+        </details>
+        <details>
+          <summary>Funciona no celular antigo do aluno?</summary>
+          <p>Funciona em qualquer celular com navegador atualizado, Android ou iPhone, e também no computador. Não ocupa espaço como um aplicativo da loja e não exige que o aluno baixe nada.</p>
+        </details>
+        <details>
+          <summary>Como recebo o acesso depois de pagar?</summary>
+          <p>Por e-mail, no endereço usado na compra, em poucos minutos — com o endereço da sua academia, o acesso de administrador e o primeiro passo. Em seguida combinamos a configuração inicial, que é feita por nós.</p>
+        </details>
+        <details>
+          <summary>Posso cancelar?</summary>
+          <p>Nos primeiros 7 dias, devolvemos o valor integral. Depois, cancele no mês que quiser: não há fidelidade nem multa, e você leva os dados.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Chamada final ─────────────────────────────────────────────────── -->
+  <section class="secao final">
+    <div class="hero-brilho" aria-hidden="true" style="top:-420px"></div>
+    <div class="knurl" aria-hidden="true"></div>
+    <div class="env">
+      <span class="etiqueta rev">Comece esta semana</span>
+      <h2 class="rev">Seu aluno já treina com o celular na mão. Que seja com o seu sistema.</h2>
+      <p class="lede rev" style="text-align:center">
+        A configuração inicial é feita por nós e o acesso chega em minutos. Em uma semana a sala
+        inteira está com a ficha no bolso.
+      </p>
+      <a class="btn btn--grande rev" href="#planos" data-cta="final">Quero na minha academia</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="env">
+    <a class="marca" href="#topo">
+      <svg width="26" height="17" viewBox="0 0 120 56" aria-hidden="true">
+        <path class="lg-barra" d="M18 28 H102" style="stroke-dashoffset:0" />
+        <rect class="lg-anilha" x="26" y="10" width="11" height="36" rx="3" />
+        <rect class="lg-anilha" x="83" y="10" width="11" height="36" rx="3" />
+      </svg>
+      <span class="marca-nome" style="font-size:16px">Academ<b>ya</b></span>
+    </a>
+    <span>Sistema de treino para academias · <span id="rodapeContato">fale com a gente antes de assinar</span></span>
+    <span>© <span id="ano">2026</span> Academya</span>
+  </div>
+</footer>
+
+<script>
+  /* ═══════════════════════════════════════════════════════════════════════
+     CONFIGURAÇÃO — é só aqui que se mexe para a página entrar em operação.
+     ═══════════════════════════════════════════════════════════════════════ */
+  const CONFIG = {
+    // Link de pagamento do Mercado Pago ou do Stripe. Enquanto estiver vazio,
+    // os botões levam ao contato em vez de a um checkout quebrado.
+    checkout: '',
+
+    // Preço mensal, só o número: '249' vira "R$ 249/mês". Vazio mostra
+    // "Sob consulta" e o botão passa a pedir uma proposta.
+    preco: '',
+    // Preço de ancoragem, opcional: aparece riscado ao lado. Ex.: '349'.
+    precoAntes: '',
+
+    // Contato de reserva, usado enquanto não há checkout e no rodapé.
+    whatsapp: '',               // só números com DDI. Ex.: '5511988887777'
+    email: ''                   // Ex.: 'contato@academya.app'
+  };
+
+  /* ── Logo: nome letra a letra, sincronizado com a barra ──────────────── */
+  const NOME = 'ACADEMYA';
+  const nomeLogo = document.getElementById('nomeLogo');
+  NOME.split('').forEach((ch, i) => {
+    const s = document.createElement('span');
+    s.textContent = ch;
+    // as letras sobem depois das anilhas assentarem
+    s.style.animationDelay = (0.9 + i * 0.055).toFixed(3) + 's';
+    if (i >= 6) s.style.color = 'var(--anilha)';   // "YA" no vermelho da anilha
+    nomeLogo.appendChild(s);
+  });
+  requestAnimationFrame(() => document.getElementById('palco').classList.add('anima'));
+
+  /* ── Preço e botões de compra ────────────────────────────────────────── */
+  const temCheckout = !!CONFIG.checkout;
+  const destinoContato = CONFIG.whatsapp
+    ? 'https://wa.me/' + CONFIG.whatsapp + '?text=' + encodeURIComponent('Olá! Quero o Academya na minha academia.')
+    : (CONFIG.email ? 'mailto:' + CONFIG.email + '?subject=' + encodeURIComponent('Quero o Academya na minha academia') : '#contato');
+  const destino = temCheckout ? CONFIG.checkout : destinoContato;
+
+  if (CONFIG.preco) {
+    document.getElementById('precoValor').textContent = 'R$ ' + CONFIG.preco;
+    document.getElementById('precoPeriodo').hidden = false;
+    if (CONFIG.precoAntes) {
+      const antes = document.getElementById('precoAntes');
+      antes.textContent = 'R$ ' + CONFIG.precoAntes;
+      antes.hidden = false;
+    }
+  }
+
+  const rotuloCompra = temCheckout
+    ? (CONFIG.preco ? 'Assinar agora' : 'Começar agora')
+    : 'Pedir uma proposta';
+  document.querySelectorAll('[data-cta]').forEach(a => {
+    if (a.dataset.cta === 'plano') { a.href = destino; a.textContent = rotuloCompra; }
+    else if (!temCheckout && a.dataset.cta === 'topo') { a.textContent = 'Falar com a gente'; }
+  });
+  if (temCheckout) {
+    document.getElementById('botaoCompra').target = '_blank';
+    document.getElementById('botaoCompra').rel = 'noopener';
+  } else {
+    document.getElementById('notaCompra').textContent =
+      'Respondemos no mesmo dia útil com o valor e o prazo de implantação.';
+  }
+  if (CONFIG.email || CONFIG.whatsapp) {
+    const r = document.getElementById('rodapeContato');
+    r.innerHTML = '<a href="' + destinoContato + '">' + (CONFIG.email || 'WhatsApp') + '</a>';
+  }
+  document.getElementById('ano').textContent = new Date().getFullYear();
+
+  /* ── Revelação no rolar, em cascata por seção ────────────────────────── */
+  const alvos = document.querySelectorAll('.rev');
+  const observador = new IntersectionObserver((itens, obs) => {
+    itens.filter(i => i.isIntersecting).forEach((item, i) => {
+      setTimeout(() => item.target.classList.add('visivel'), i * 85);
+      obs.unobserve(item.target);
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -60px' });
+  alvos.forEach(a => observador.observe(a));
+
+  /* ── Números que sobem quando entram na tela ─────────────────────────── */
+  const sobeNumero = el => {
+    const alvo = parseInt(el.dataset.contar, 10);
+    const sufixo = el.dataset.sufixo || '';
+    const inicio = performance.now();
+    const dur = 1300;
+    const passo = agora => {
+      const t = Math.min(1, (agora - inicio) / dur);
+      const suave = 1 - Math.pow(1 - t, 3);
+      el.textContent = Math.round(alvo * suave).toLocaleString('pt-BR') + (t === 1 ? sufixo : '');
+      if (t < 1) requestAnimationFrame(passo);
+    };
+    requestAnimationFrame(passo);
+  };
+  const contador = new IntersectionObserver((itens, obs) => {
+    itens.forEach(i => { if (i.isIntersecting) { sobeNumero(i.target); obs.unobserve(i.target); } });
+  }, { threshold: 0.6 });
+  document.querySelectorAll('[data-contar]').forEach(n => contador.observe(n));
+
+  /* ── A demonstração do treino: um ciclo curto, em laço ───────────────── */
+  const paradoPorPreferencia = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const series = [...document.querySelectorAll('.serie')];
+  const barra = document.getElementById('barraDescanso');
+  const conta = document.getElementById('contaDescanso');
+  const fala = document.getElementById('falaCarga');
+  const relogio = document.getElementById('relogioFone');
+
+  const espera = ms => new Promise(r => setTimeout(r, ms));
+
+  async function ciclo() {
+    while (true) {
+      series.forEach(s => s.dataset.feita = 'nao');
+      fala.style.opacity = '0';
+      barra.style.transition = 'none';
+      barra.style.width = '0%';
+      conta.textContent = '90s';
+      await espera(900);
+
+      for (const s of series) {
+        s.dataset.feita = 'sim';
+        // descanso: a barra enche enquanto a conta cai
+        barra.style.transition = 'width 1.6s linear';
+        barra.style.width = '100%';
+        for (let t = 90; t >= 0; t -= 30) { conta.textContent = t + 's'; await espera(530); }
+        barra.style.transition = 'none';
+        barra.style.width = '0%';
+        conta.textContent = '90s';
+      }
+
+      fala.style.transition = 'opacity .5s ease';
+      fala.style.opacity = '1';
+      await espera(3600);
+    }
+  }
+  if (!paradoPorPreferencia) {
+    fala.style.opacity = '0';
+    ciclo();
+    // relógio do mockup, para a tela não parecer congelada
+    const tique = () => {
+      const d = new Date();
+      relogio.textContent = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    };
+    tique(); setInterval(tique, 30000);
+  } else {
+    series.forEach(s => s.dataset.feita = 'sim');
+  }
+
+  /* ── Sombra da barra de navegação ao descolar do topo ────────────────── */
+  const nav = document.getElementById('nav');
+  const marcaTopo = () => nav.dataset.preso = window.scrollY > 12 ? 'sim' : 'nao';
+  marcaTopo();
+  addEventListener('scroll', marcaTopo, { passive: true });
+
+  /* ── Só um acordeão aberto por vez ───────────────────────────────────── */
+  const todos = [...document.querySelectorAll('.faq details')];
+  todos.forEach(d => d.addEventListener('toggle', () => {
+    if (d.open) todos.forEach(o => { if (o !== d) o.open = false; });
+  }));
+</script>
+</body>
+</html>
