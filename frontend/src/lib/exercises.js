@@ -194,9 +194,23 @@ export const figureOf = S => (S?.exFigure === 'female' || S?.exFigure === 'male'
   ? S.exFigure
   : (S?.body === 'female' ? 'female' : 'male')
 const drawing = (ex, figure) => (figure === 'female' ? ex.fv : figure === 'male' ? ex.mv : null) || null
-export const imgSrc = (ex, figure) => IMG_BASE + (drawing(ex, figure) ? drawing(ex, figure) + '.webp' : ex.img)
+// Um build sem a midia do catalogo (VITE_MEDIA=none, usado pelo deploy publico): os arquivos da
+// Gym visual sao licenciados para o openGym e nao podem ir num site de terceiros
+// (catalogue/media/NOTICE.md), entao esse build simplesmente nao tem de onde busca-los.
+//
+// Dizer isso aqui, e nao em cada tela, e o que evita 404: sem este flag cada exercicio pediria o
+// video, erraria, pediria a foto, erraria de novo e so entao cairia no tile neutro — duas
+// requisicoes perdidas e uma piscada por exercicio, mais o prefetch do service worker enchendo o
+// cache de erros. Devolvendo null, quem consome ja trata como "exercicio sem midia", um estado
+// que o app sempre teve (ver Media.jsx) e sabe desenhar.
+export const CATALOGUE_MEDIA = ENV.VITE_MEDIA !== 'none'
+export const imgSrc = (ex, figure) => CATALOGUE_MEDIA
+  ? IMG_BASE + (drawing(ex, figure) ? drawing(ex, figure) + '.webp' : ex.img)
+  : null
 const clipFile = f => (CLIP_EXT !== '.mp4' && f.endsWith('.mp4') ? f.slice(0, -4) + CLIP_EXT : f)
-export const gifSrc = (ex, figure) => GIF_BASE + clipFile(drawing(ex, figure) ? drawing(ex, figure) + '.mp4' : ex.gif)
+export const gifSrc = (ex, figure) => CATALOGUE_MEDIA
+  ? GIF_BASE + clipFile(drawing(ex, figure) ? drawing(ex, figure) + '.mp4' : ex.gif)
+  : null
 // The catalogue's animations are short MP4 loops; a fork's or an older build's may still be GIFs.
 export const isVideoSrc = src => /\.(mp4|webm)(\?|$)/i.test(src || '')
 

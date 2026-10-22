@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { imgSrc, gifSrc, isVideoSrc, isCustomEx, figureOf } from '../lib/exercises.js'
+import { imgSrc, gifSrc, isVideoSrc, isCustomEx, figureOf, CATALOGUE_MEDIA } from '../lib/exercises.js'
 import { MOBILE } from '../lib/mobile.js'
 import { useStore } from '../store/useStore.js'
 import { t, exerciseNameFor } from '../lib/i18n.js'
@@ -34,6 +34,10 @@ function BuiltinMedia({ ex, id, compact, minimizable }) {
   const clip = ex.gif && isVideoSrc(gifSrc(ex, body)) ? gifSrc(ex, body) : null
   const clipSrc = useClipInMemory(clip)
   if (!ex.gif) return null
+  // Build sem a midia do catalogo: o cartao fecha, exatamente como num exercicio sem midia ou com
+  // a animacao desligada nos Ajustes. Melhor que 1.324 tiles neutros, que ocupariam espaco sem
+  // informar nada e fariam a tela parecer quebrada em vez de enxuta.
+  if (!CATALOGUE_MEDIA) return null
   if (minimizable && gifSize === 'off') return null
   const mini = minimizable && gifSize === 'mini'
   const toggleSize = e => { e.stopPropagation(); update(s => { s.gifSize = mini ? 'full' : 'mini' }) }
