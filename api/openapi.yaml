@@ -2265,6 +2265,122 @@ paths:
               schema: { $ref: '#/components/schemas/Error' }
               example: { error: "no such user" }
 
+  /api/admin/roster:
+    get:
+      tags: [admin]
+      operationId: adminRoster
+      summary: 'Admin: the gym roster'
+      description: >-
+        One row per member (admins excluded), with how many days since their last session, how
+        many sessions in the last 7 and 30 days, the routines they carry and where they stand
+        (new / active / slipping / gone — see api/roster.js). The caller's own routines travel
+        with the list, because assigning one is what the screen does next.
+      responses:
+        '200':
+          description: The roster, its summary and the caller's routines.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  members:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        name: { type: string }
+                        created: { type: integer, nullable: true }
+                        disabled: { type: boolean }
+                        workouts: { type: integer }
+                        lastWorkout: { type: integer, nullable: true }
+                        days: { type: integer, nullable: true }
+                        last7: { type: integer }
+                        last30: { type: integer }
+                        status: { type: string, enum: [new, active, slipping, gone] }
+                        routines:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id: { type: string }
+                              name: { type: string }
+                              exercises: { type: integer }
+                  summary:
+                    type: object
+                    properties:
+                      members: { type: integer }
+                      active: { type: integer }
+                      slipping: { type: integer }
+                      gone: { type: integer }
+                      new: { type: integer }
+                      noRoutine: { type: integer }
+                      sessions7: { type: integer }
+                  routines:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        name: { type: string }
+                        emoji: { type: string, nullable: true }
+                        exercises: { type: integer }
+                  now: { type: integer }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/admin/user/routine:
+    post:
+      tags: [admin]
+      operationId: adminAssignRoutine
+      summary: 'Admin: send a routine to a member'
+      description: >-
+        Copies one of the caller's routines into a member's profile, where it syncs to their
+        devices like a change they had made themselves. The copy gets its own id and remembers
+        the routine it came from, so sending a corrected version replaces the earlier copy
+        instead of adding a second one.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id, routineId]
+              properties:
+                id: { type: string, description: The member's user id. }
+                routineId: { type: string, description: A routine id of the caller's own profile. }
+      responses:
+        '200':
+          description: Written. `rev` is the member profile's new revision.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  rev: { type: integer }
+                  routines: { type: integer }
+        '400':
+          description: The target is an admin, or the member's document could not be stored.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { error: "cannot assign to an admin" }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: No such user, or no such routine on the caller's profile.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { error: "no such routine" }
+        '503':
+          description: The member's stored profile could not be read.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { error: "state unreadable" }
+
   /api/admin/invites:
     get:
       tags: [admin]

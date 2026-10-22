@@ -100,6 +100,19 @@ function UserDetail({ id, onChanged, close }) {
       {u.resetUntil && <span className="adm-pill acc">reset code until {new Date(u.resetUntil).toLocaleString()}</span>}
       <span className="adm-pill">joined {u.created ? fmtDate(u.created.slice(0, 10)) : '–'}</span>
     </div>
+    {/* The gym floor lives on its own page: this one is about the instance (accounts, invites,
+        the log), that one is about the people training on it. */}
+    <div className="card" onClick={() => nav('/members')} style={{ cursor: 'pointer' }}>
+      <div className="row between">
+        <h2 style={{ margin: 0 }}>Members</h2>
+        <Icon name="chevronRight" className="chev" />
+      </div>
+      <div className="adm-lead" style={{ marginBottom: 0 }}>
+        Who is still training and who stopped coming, with the routines each of them carries —
+        and one tap to send a member a copy of one of yours.
+      </div>
+    </div>
+
     <div className="tiles" style={{ textAlign: 'start' }}>
       <div className="tile"><div className="l">Workouts</div><div className="v" style={{ fontSize: '1.1rem' }}>{workouts.length}</div></div>
       <div className="tile"><div className="l">Weigh-ins</div><div className="v" style={{ fontSize: '1.1rem' }}>{d.bodyweight.length}</div></div>

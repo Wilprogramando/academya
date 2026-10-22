@@ -33,6 +33,7 @@ import { createDeviceLink, findDeviceLink, burnDeviceLink, dropDeviceLinks } fro
 import { createMediaStore, mediaLimits, mediaConfig, MediaError, HASH_RE } from './media.js';
 import { effectiveRoutineId } from './queue.js';
 import { stampPut } from './sync-stamps.js';
+import { memberRow, rosterSummary, routineForMember, placeRoutine } from './roster.js';
 import { atomicWrite as durableWrite } from './durable.js';
 import { excusedOn, nudgeFor, nudgeWindowOpen, toneOf } from './nudge.js';
 
@@ -2494,6 +2495,61 @@ const routes = {
     // Logged with the name, because the id is about to mean nothing to anyone reading this back.
     audit(req, 'admin.user.delete', { user: admin, msg: name });
     json(res, 200, { ok: true, id: u.id });
+  },
+
+  /* ---------- gym members (the owner's floor view) ---------- */
+  // One row per member, with how long since they last trained and which routines they carry.
+  // The admin dashboard answers "who is on this instance"; this answers "who stopped coming" —
+  // the only question a gym owner opens a screen for twice a week.
+  'GET /api/admin/roster': async (req, res) => {
+    const admin = requireAdmin(req, res); if (!admin) return;
+    const now = Date.now();
+    const members = db.users
+      .filter(u => !isAdmin(u))                 // o professor/dono nao e aluno da propria lista
+      .map(u => memberRow(u, readState(u.id), now));
+    // The owner's own routines travel with the list: assigning one is the next thing the screen
+    // does, and a second request for a handful of names would only add a spinner to that click.
+    const mine = records((readState(admin.id) || {}).routines).map(r => ({
+      id: r.id, name: r.name || '', emoji: r.emoji || null, exercises: records(r.ex).length
+    }));
+    json(res, 200, { members, summary: rosterSummary(members), routines: mine, now });
+  },
+
+  // Send one of the owner's routines to a member. The copy lands in the member's own profile and
+  // syncs to their phone like any other change they would have made themselves.
+  'POST /api/admin/user/routine': async (req, res) => {
+    const admin = requireAdmin(req, res); if (!admin) return;
+    const body = await readBody(req);
+    const u = db.users.find(x => x.id === body.id);
+    if (!u) return json(res, 404, { error: 'no such user' });
+    if (isAdmin(u)) return json(res, 400, { error: 'cannot assign to an admin' });
+    const mine = records((readState(admin.id) || {}).routines);
+    const routine = mine.find(r => r.id === body.routineId);
+    if (!routine) return json(res, 404, { error: 'no such routine' });
+
+    // Same compare-and-write discipline as PUT /api/data: read, change, stamp, bump the revision.
+    // Without the stamp the member's next sync would read this as a document older than its own
+    // and undo it (sync-stamps.js) — the routine would appear on the floor and vanish on their
+    // next push, which is the worst possible way for this to fail.
+    const cur = readStateStrict(u.id);
+    if (cur === UNREADABLE) { console.error('state file unreadable for', u.id); return json(res, 503, { error: 'state unreadable' }); }
+    const next = cur ? JSON.parse(JSON.stringify(cur)) : {};
+    delete next.active;
+    next.routines = placeRoutine(records(next.routines), routineForMember(routine, { from: admin.name }));
+    const curRev = cur?._rev || 0;
+    const report = {};
+    stampPut(cur, next, { stamped: false, report });
+    next._rev = curRev + (report.changed ? 2 : 1);
+    next._wids = [...(Array.isArray(cur?._wids) ? cur._wids : []), ...(cur?._wid ? [cur._wid] : [])]
+      .filter(x => typeof x === 'string').slice(-WID_KEEP);
+    next._wid = crypto.randomBytes(8).toString('hex');
+    let text;
+    try { text = JSON.stringify(next); }
+    catch (e) { if (e instanceof RangeError) return json(res, 400, { error: 'invalid state' }); throw e; }
+    atomicWrite(stateFile(u.id), text);
+    stateCache.delete(u.id);
+    audit(req, 'admin.user.routine', { user: admin, msg: routine.name + ' → ' + u.name });
+    json(res, 200, { ok: true, rev: next._rev, routines: records(next.routines).length });
   },
 
   'GET /api/admin/invites': async (req, res) => {
