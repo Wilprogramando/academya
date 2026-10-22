@@ -1,0 +1,262 @@
+/* ============================================================================
+   Academy — tema
+   ----------------------------------------------------------------------------
+   Carregada DEPOIS de index.css, que segue sendo o design system de base: esta
+   folha troca a paleta e calibra a profundidade, sem redefinir estrutura.
+   Remover o import em main.jsx devolve o app ao tema original.
+
+   A PALETA (grafite + volt)
+   Uma academia e um lugar de pouca luz e muito contraste: piso e borracha
+   escura, e o que chama atencao sao as marcacoes e os numeros. A paleta imita
+   isso. Uma cor de energia, e so uma, sobre uma rampa de grafite neutro:
+
+     grafite   #0A0C0F -> #2D3542   fundo, cartoes, controles
+     volt      #C2F24B              a cor da acao: iniciar, confirmar, progresso
+     laranja   #FF8A3D              treino em andamento, cronometro correndo
+     ambar     #FFC247              recorde pessoal, meta
+     ciano     #44D3E6              descanso, recuperacao
+     vermelho  #FF5252              excluir, risco
+
+   As cores de apoio nunca disputam com o volt: aparecem em pontos pequenos
+   (etiqueta, ponto, icone), nunca como fundo de area grande.
+
+   O QUE "MAIS LIMPO" SIGNIFICA AQUI
+   1. SUPERFICIE CHAPADA, SEPARADA POR LUZ, NAO POR CAIXA. Cartao sem borda e
+      quase sem gradiente; o que o descola do fundo e uma sombra curta e um fio
+      de luz de 1px no topo. Sem moldura, sem brilho ambiente atras de tudo.
+   2. SOMBRA CURTA. Duas camadas no maximo e raio pequeno. Sombra longa e
+      difusa suja o fundo escuro e e o que fazia a tela parecer "pesada".
+   3. O VOLT E RARO. Botao primario, aba ativa, progresso, dia de hoje. Mais que
+      isso e menos: se tudo brilha, nada brilha.
+   4. TIPOGRAFIA FAZ A HIERARQUIA. Rotulo de secao pequeno e espacado em caixa
+      alta; titulo grande e firme; corpo intocado.
+   ========================================================================== */
+
+:root {
+  /* ---- rampa de grafite ---------------------------------------------- */
+  --bg:        #0A0C0F;
+  --bg-el:     #10141A;   /* barras e folhas */
+  --surface:   #171C23;   /* cartao */
+  --surface-2: #212832;   /* pressionado / aninhado */
+  --surface-3: #2D3542;   /* controles */
+
+  /* ---- a cor da acao ------------------------------------------------- */
+  --acc:       #C2F24B;
+  --acc-2:     #93C018;   /* pressionado e fim do gradiente */
+  --on-acc:    #0A0C0F;   /* texto sobre volt: grafite, ~15:1 */
+  --acc-soft:  color-mix(in srgb, var(--acc) 14%, transparent);
+  --acc-line:  color-mix(in srgb, var(--acc) 34%, transparent);
+
+  /* ---- apoio --------------------------------------------------------- */
+  /* Harmonizadas com o volt: todas puxadas para o mesmo calor/saturacao, para
+     uma etiqueta laranja ao lado de um botao volt nao parecer de outro app. */
+  --orange: #FF8A3D;
+  --yellow: #FFC247;
+  --red:    #FF5252;
+  --teal:   #44D3E6;
+  --mint:   #5FE3C0;
+  --green:  #A8E04D;   /* "concluido" — familia do volt, um passo mais folha */
+  --blue:   #4D9CFF;
+  --indigo: #7C7CFF;
+  --purple: #B57CF2;
+  --pink:   #FF5C8A;
+  --brown:  #A98C6B;
+  --grey:   #8A8F99;
+
+  /* ---- linhas -------------------------------------------------------- */
+  --sep:    rgba(130,140,155,.26);
+  --sep-op: rgba(130,140,155,.16);
+
+  /* ---- elevacao (curta de proposito) --------------------------------- */
+  --el-1: 0 1px 2px rgba(0,0,0,.40);
+  --el-2: 0 2px 6px rgba(0,0,0,.44);
+  --el-3: 0 8px 28px -8px rgba(0,0,0,.66);
+  --el-lip: inset 0 1px 0 rgba(255,255,255,.045);
+
+  /* ---- geometria ----------------------------------------------------- */
+  --r-card: 14px;
+  --r-lg: 16px;
+}
+
+/* No tema claro o volt perde a funcao: sobre branco ele e ilegivel como texto.
+   O acento vira um volt profundo (oliva), que mantem a familia da cor e passa
+   contraste em texto pequeno (~4.6:1 sobre branco); o texto sobre o botao
+   primario passa a ser branco. A rampa de grafite da lugar a cinzas frios. */
+:root[data-theme="light"] {
+  --bg:        #F1F3F5;
+  --bg-el:     #F7F8FA;
+  --surface:   #FFFFFF;
+  --surface-2: #EAEDF0;
+  --surface-3: #DEE2E7;
+
+  --acc:       #5E8A0C;
+  --acc-2:     #496D07;
+  --on-acc:    #FFFFFF;
+
+  --orange: #D96A12;
+  --yellow: #B8860B;
+  --red:    #D93636;
+  --teal:   #0E8FA3;
+  --mint:   #0F9B82;
+  --green:  #5E8A0C;
+  --blue:   #1565D8;
+  --indigo: #4F4FD9;
+  --purple: #8A3FC0;
+  --pink:   #D62D62;
+  --grey:   #6B7280;
+
+  --sep:    rgba(60,66,76,.22);
+  --sep-op: rgba(60,66,76,.14);
+
+  --el-1: 0 1px 2px rgba(60,66,76,.08);
+  --el-2: 0 2px 8px rgba(60,66,76,.12);
+  --el-3: 0 10px 32px -10px rgba(60,66,76,.22);
+  --el-lip: inset 0 1px 0 rgba(255,255,255,.85);
+}
+
+/* O seletor de acento do app continua funcionando; "lime" e o padrao e passa a
+   ser o volt. Os outros ganham o mesmo tratamento de contraste da paleta nova,
+   para quem trocar a cor nao cair num par ilegivel. */
+:root[data-accent="lime"]   { --acc:#C2F24B; --acc-2:#93C018; --on-acc:#0A0C0F }
+:root[data-accent="orange"] { --acc:#FF8A3D; --acc-2:#D96A12; --on-acc:#0A0C0F }
+:root[data-accent="gold"]   { --acc:#FFC247; --acc-2:#C8900F; --on-acc:#0A0C0F }
+:root[data-accent="teal"]   { --acc:#44D3E6; --acc-2:#0E8FA3; --on-acc:#0A0C0F }
+:root[data-accent="sky"]    { --acc:#4D9CFF; --acc-2:#1565D8; --on-acc:#FFFFFF }
+:root[data-accent="violet"] { --acc:#B57CF2; --acc-2:#8A3FC0; --on-acc:#FFFFFF }
+:root[data-accent="pink"]   { --acc:#FF5C8A; --acc-2:#D62D62; --on-acc:#FFFFFF }
+:root[data-accent="red"]    { --acc:#FF5252; --acc-2:#D93636; --on-acc:#FFFFFF }
+
+:root[data-theme="light"][data-accent="lime"]   { --acc:#5E8A0C; --acc-2:#496D07; --on-acc:#FFFFFF }
+:root[data-theme="light"][data-accent="orange"] { --acc:#C25E0A; --acc-2:#9A4A06; --on-acc:#FFFFFF }
+:root[data-theme="light"][data-accent="gold"]   { --acc:#96690A; --acc-2:#7A5508; --on-acc:#FFFFFF }
+:root[data-theme="light"][data-accent="teal"]   { --acc:#0E7F91; --acc-2:#0A626F; --on-acc:#FFFFFF }
+
+/* Fundo chapado: sem halo. O halo radial da versao anterior dava "atmosfera",
+   mas num app de treino ele some atras dos cartoes e so deixa o preto sujo. */
+body { background-image: none }
+
+/* ------------------------------------------------------------------ cartoes */
+/* Chapado + sombra curta + fio de luz. Sem gradiente: a 2% ele nao se ve no
+   grafite e a 8% marca a emenda entre cartoes empilhados. */
+.card,
+.sect-b,
+.item,
+.tile {
+  background: var(--surface);
+  box-shadow: var(--el-1), var(--el-lip);
+}
+
+.card.tappable { transition: box-shadow var(--fast) var(--ease), transform var(--fast) var(--ease) }
+@media (hover: hover) { .card.tappable:hover { box-shadow: var(--el-2), var(--el-lip) } }
+.card.tappable:active { box-shadow: var(--el-1); transform: scale(.993) }
+.tile { transition: box-shadow var(--fast) var(--ease), transform var(--fast) var(--ease) }
+.tile.tappable:active { box-shadow: var(--el-1); transform: scale(.987) }
+
+/* O numero e o conteudo do tile; o rotulo acima dele e so endereco. */
+.tile .v { font-weight: 650; letter-spacing: -.03em }
+.tile .l { letter-spacing: .05em; text-transform: uppercase; font-size: 11px; font-weight: 600; color: var(--label-3) }
+
+/* ------------------------------------------------------------------ titulos */
+.hdr h1 { font-weight: 750; letter-spacing: -.034em }
+.card .big { font-weight: 650; letter-spacing: -.03em }
+
+/* Rotulo de secao como etiqueta: e o que separa "tela de app" de "lista de
+   divs". Pequeno, espacado, apagado — o conteudo abaixo e que fala. */
+.sect-t,
+h4.sec,
+.card h2 {
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--label-3);
+}
+.lbl2 { letter-spacing: .05em; text-transform: uppercase; font-size: 11px; font-weight: 600; color: var(--label-3) }
+.ttl { font-weight: 600; letter-spacing: -.016em }
+
+/* ------------------------------------------------------------------- botoes */
+/* O primario e a unica area grande de volt na tela. Chapado, sem gradiente e
+   sem glow: a cor ja e o destaque, o brilho so a emborrachava. */
+.btn { box-shadow: var(--el-1), var(--el-lip) }
+.btn.primary {
+  background: var(--acc);
+  color: var(--on-acc);
+  box-shadow: var(--el-1);
+}
+.btn.primary:active { background: var(--acc-2); box-shadow: none }
+.btn.tinted { background: var(--acc-soft); box-shadow: inset 0 0 0 var(--hair) var(--acc-line) }
+.btn.danger { box-shadow: inset 0 0 0 var(--hair) color-mix(in srgb, var(--red) 32%, transparent) }
+.btn.ghost, .btn.plain { box-shadow: none }
+.btn:disabled { box-shadow: none }
+
+.iconbtn { background: var(--surface-2); box-shadow: var(--el-1), var(--el-lip) }
+.iconbtn.on-ss { background: var(--acc-soft); box-shadow: inset 0 0 0 var(--hair) var(--acc-line) }
+
+/* ------------------------------------------------------------ tira da semana */
+/* Hoje e uma pastilha com anel volt — o primeiro ponto que o olho acha. */
+.wday.today { background: var(--acc-soft); box-shadow: inset 0 0 0 var(--hair) var(--acc-line) }
+.wday.today .num { color: var(--acc); font-weight: 600 }
+.wday .num { transition: color var(--fast) }
+.wday .dot { transition: background var(--fast) }
+
+/* ---------------------------------------------------------------- etiquetas */
+/* Anel na propria cor em vez de fundo forte: a etiqueta informa, nao compete. */
+.tag { box-shadow: inset 0 0 0 var(--hair) color-mix(in srgb, currentColor 24%, transparent); letter-spacing: .03em }
+.tag.acc { box-shadow: inset 0 0 0 var(--hair) var(--acc-line) }
+.chip { box-shadow: var(--el-1), var(--el-lip) }
+.chip.on { box-shadow: inset 0 0 0 var(--hair) var(--acc-line) }
+
+/* ------------------------------------------------------- controle segmentado */
+.seg { box-shadow: inset 0 1px 2px rgba(0,0,0,.26) }
+:root[data-theme="light"] .seg { box-shadow: inset 0 1px 2px rgba(60,66,76,.09) }
+.seg-sel { box-shadow: var(--el-1), var(--el-lip) }
+
+/* ------------------------------------------------------------------ campos */
+.field, .input { box-shadow: inset 0 1px 2px rgba(0,0,0,.18) }
+:root[data-theme="light"] .field,
+:root[data-theme="light"] .input { box-shadow: inset 0 1px 2px rgba(60,66,76,.07) }
+.field:focus-within, .input:focus { box-shadow: inset 0 0 0 1.5px var(--acc-line) }
+
+/* ------------------------------------------------------------ barra de abas */
+/* O index.css explica o vidro quase opaco e o blur curto; aqui entra so o fio
+   que separa a barra do conteudo. O @supports de la (sem blur -> opaco) segue
+   valendo, porque nada aqui mexe no `background` da barra. */
+#tabbar { box-shadow: 0 -1px 0 var(--sep-op) }
+#tabbar button { transition: color var(--fast), transform var(--fast) var(--ease) }
+#tabbar button:active { transform: scale(.94) }
+
+/* O disco de iniciar e o unico lugar com glow na tela: e o botao que a pessoa
+   procura com o polegar no meio de uma serie. */
+#tabbar button.start .cir {
+  background: var(--acc);
+  box-shadow: 0 2px 8px -1px color-mix(in srgb, var(--acc) 38%, transparent),
+              0 8px 22px -8px color-mix(in srgb, var(--acc) 42%, transparent);
+}
+#tabbar button.start.rec .cir {
+  background: var(--orange);
+  box-shadow: 0 2px 8px -1px color-mix(in srgb, var(--orange) 40%, transparent),
+              0 8px 22px -8px color-mix(in srgb, var(--orange) 45%, transparent);
+}
+
+/* -------------------------------------------------- folhas (bottom sheets) */
+.sheet, .sheet-body, #sheet, .modal, .modal-card { box-shadow: var(--el-3) }
+
+/* --------------------------------------------------------------- progresso */
+.wprog { box-shadow: inset 0 1px 2px rgba(0,0,0,.26) }
+.wprog i { background: var(--acc) }
+.sld-fill { background: var(--acc) }
+.sld-knob { box-shadow: var(--el-2), var(--el-lip) }
+.sw .knob { box-shadow: var(--el-1), var(--el-lip) }
+
+/* -------------------------------------------------------------- miniaturas */
+.thumb { box-shadow: var(--el-1) }
+.exmedia { box-shadow: var(--el-1) }
+.lrow-i { box-shadow: var(--el-1), inset 0 1px 0 rgba(255,255,255,.14) }
+
+/* -------------------------------------------------------------------- foco */
+:focus-visible { box-shadow: 0 0 0 4px color-mix(in srgb, var(--acc) 20%, transparent) }
+
+/* ------------------------------------------------------------------ motion */
+@media (prefers-reduced-motion: reduce) {
+  .card.tappable, .tile, #tabbar button, .wday .num, .wday .dot { transition: none }
+}

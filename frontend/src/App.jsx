@@ -62,7 +62,9 @@ function applyPrefs(theme, accent) {
   de.dataset.theme = resolveTheme(theme)
   applyAccent(de, accent, de.dataset.theme)
   const meta = document.querySelector('meta[name="theme-color"]')
-  if (meta) meta.content = de.dataset.theme === 'light' ? '#f2f2f7' : '#000000'
+  // Tem de acompanhar --bg de theme-academy.css: e a cor que o navegador pinta
+  // na barra de status, e um tom fora de sintonia aparece como uma faixa.
+  if (meta) meta.content = de.dataset.theme === 'light' ? '#F1F3F5' : '#0A0C0F'
   if (MOBILE) setSystemBarsLight(de.dataset.theme === 'light')
 }
 
