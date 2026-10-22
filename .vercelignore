@@ -6,25 +6,32 @@
 # publicada — a licenca da Gym visual em catalogue/media/NOTICE.md e para o openGym, nao para
 # terceiros.
 #
+# TODA LINHA COMECA COM "/", E ISSO NAO E ESTILO.
+# Sem a barra inicial o padrao casa com um diretorio DAQUELE NOME EM QUALQUER NIVEL, igual ao
+# .gitignore. Foi assim que "scripts/" derrubou um deploy: alem do scripts/ da raiz ele apagou
+# frontend/scripts/, que tem o sw-stamp.mjs importado pelo vite.config.js, e o build morreu com
+# "Could not resolve './scripts/sw-stamp.mjs'". Hoje existem quatro diretorios chamados scripts
+# (api/, frontend/, mcp/ e a raiz) e dois chamados catalogue (raiz e scripts/catalogue).
+#
 # ATENCAO: api/ NAO entra nesta lista, por mais tentador que pareca num deploy so de frontend.
 # O build importa api/coach/core/* (src/lib/coach-local.js, src/views/CoachSetup.jsx); sem esses
 # arquivos o `vite build` falha com import nao resolvido.
 
-catalogue/
-website/
-docs/
-helm/
-kubernetes/
-mcp/
-contrib/
-assets/
-web/
-data/
-coach-auth/
+/catalogue/
+/website/
+/docs/
+/helm/
+/kubernetes/
+/mcp/
+/contrib/
+/assets/
+/web/
+/data/
+/coach-auth/
 
-# Scripts de build que o build estatico nao usa (build:mobile usa, e ele nao roda aqui).
-scripts/
+# Scripts da RAIZ. frontend/scripts/ tem de ficar: o vite.config.js importa sw-stamp.mjs de la.
+/scripts/
 
 # Sobras locais
 *.log
-.env
+/.env
