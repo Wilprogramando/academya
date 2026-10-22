@@ -3,7 +3,7 @@ import { useUI } from '../store/useUI.js'
 import { webauthnOK, passkeyLogin, passkeyRegister, passkeyError, bio } from '../lib/api.js'
 import { hasData } from '../store/useStore.js'
 import { t } from '../lib/i18n.js'
-import { DEMO, REPO } from '../lib/demo.js'
+import { DEMO, STATIC_BUILD, REPO } from '../lib/demo.js'
 import { BRAND } from '../lib/brand.js'
 import { guestAllowed } from '../lib/guest.js'
 import { useState, useRef, useEffect } from 'react'
@@ -93,6 +93,25 @@ export default function Login() {
       </div>
       <div className="dim small" style={{ marginTop: 22, lineHeight: 1.6 }}>
         <a href={REPO} target="_blank" rel="noopener">{t('Self-host it in a minute →')}</a>
+      </div>
+    </div>
+  )
+
+  // Build estatico (Vercel): tambem nao ha backend contra o que entrar, entao a unica porta e o
+  // perfil local — mas, diferente do demo, nada de "demo" nem de dados de exemplo: e o app de
+  // verdade, guardado neste navegador. Toda frase aqui reusa chave ja existente de proposito:
+  // scripts/check-locales.mjs exige a mesma chave nos 18 pacotes, e inventar texto novo deixaria
+  // 17 idiomas sem traducao.
+  if (STATIC_BUILD) return (
+    <div className="narrow" style={wrap}>
+      {head}
+      <div className="muted" style={{ marginBottom: 30 }}>{t('Your workouts. Your weights. Your profile.')}</div>
+      <Button variant="primary" icon="play" onClick={() => setGuest(true)}>{t('Start')}</Button>
+      <div className="card small muted" style={{ textAlign: 'start', marginTop: 16 }}>
+        {t('Guest mode: your data lives only in this browser.')}
+      </div>
+      <div className="dim small" style={{ marginTop: 22, lineHeight: 1.6 }}>
+        {t('Each profile keeps its own plan, workouts & body weight.')}
       </div>
     </div>
   )

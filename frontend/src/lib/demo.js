@@ -12,3 +12,18 @@
 export const DEMO = import.meta.env.VITE_DEMO === '1'
 export const DEMO_SEEDED = 'gym_demo_seeded_v1'
 export const REPO = 'https://gitlab.com/DuarteSantos8/opengym'
+
+// Build estatico (VITE_STATIC=1) — o que roda no Vercel.
+//
+// Mesma situacao do demo quanto ao backend (hospedagem de arquivos estaticos, sem a API Node),
+// com UMA diferenca que e a razao deste flag existir: o demo semeia um historico de exemplo
+// (useStore boot + demoSeed.js) para os graficos terem o que mostrar. Num app de verdade isso
+// seria um historico falso na conta de cada pessoa, entao o build estatico NAO semeia nada: abre
+// vazio, como um perfil novo.
+//
+// Tudo o mais que precisa da API — entrada por passkey, sincronizacao, painel de admin, coach,
+// notificacoes push — fica de fora dos dois. Boa parte disso ja se desliga sozinha, porque
+// depende de `user` (nunca existe sem servidor) ou de `config.coach.enabled` (a config vem da
+// API); NO_BACKEND cobre o que resta: as secoes e avisos que falariam de um servidor que nao ha.
+export const STATIC_BUILD = import.meta.env.VITE_STATIC === '1'
+export const NO_BACKEND = DEMO || STATIC_BUILD
