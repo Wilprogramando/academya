@@ -1,9 +1,9 @@
 # O que NAO precisa subir para o Vercel.
 #
 # O repositorio tem 325 MB, e quase tudo e peso morto para um deploy estatico do frontend:
-# catalogue/ sozinho tem 346 MB de midia de exercicio, que no build nao e lida (o plugin
-# catalogueMedia do vite.config.js so a serve no dev server). No site publicado ela vem do
-# proprio repositorio por CDN — veja frontend/.env.static e catalogue/media/NOTICE.md.
+# catalogue/ sozinho tem 346 MB de midia de exercicio, da qual sobe apenas media/anim/ (63 MB); o
+# resto o build nao le (o plugin catalogueMedia do vite.config.js so o serve no dev server) e no
+# site vem por CDN — veja frontend/.env.static e catalogue/media/NOTICE.md.
 #
 # TODA LINHA COMECA COM "/", E ISSO NAO E ESTILO.
 # Sem a barra inicial o padrao casa com um diretorio DAQUELE NOME EM QUALQUER NIVEL, igual ao
@@ -16,10 +16,15 @@
 # O build importa api/coach/core/* (src/lib/coach-local.js, src/views/CoachSetup.jsx); sem esses
 # arquivos o `vite build` falha com import nao resolvido.
 
-# catalogue/ inteiro fica fora: o build nao le nada de la (os dados do catalogo ja estao gerados
-# em frontend/src/lib/exercises-data.js, e o plugin catalogueMedia do vite.config.js so serve a
-# midia no dev server), e no site publicado a midia vem do repositorio por CDN (frontend/.env.static).
-/catalogue/
+# De catalogue/ sobe SO media/anim/ (63 MB de WebP animado): sao as animacoes da lista de
+# Exercicios, que ficam na propria origem para o service worker poder guarda-las (frontend/.env.static).
+# O resto (283 MB: os clipes MP4, as fotos paradas, o fonte do catalogo e do i18n) o build nao le
+# — os dados ja estao gerados em frontend/src/lib/exercises-data.js — e no site vem por CDN.
+/catalogue/exercises/
+/catalogue/i18n/
+/catalogue/browse/
+/catalogue/media/still/
+/catalogue/media/clip/
 /website/
 /docs/
 /helm/

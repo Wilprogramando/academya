@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync } from 'node:fs'
+import { readFileSync, writeFileSync, existsSync, cpSync, readdirSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -35,6 +35,41 @@ const catalogueMedia = {
   }
 }
 
+// As animacoes da lista de Exercicios (catalogue/media/anim, WebP animado) vao dentro do build
+// estatico, em dist/exercise-media/anim: na propria origem o service worker as guarda para o app
+// instalado (sw.js trata so a propria origem) e o media-prefetch as adianta — de um CDN sobraria o
+// cache do navegador. A foto e o clipe MP4 continuam fora do deploy (frontend/.env.static).
+//
+// Nao estao em public/ porque o build local e o da imagem Docker nao as querem no dist: ali o
+// nginx serve catalogue/media inteiro de qualquer modo. Por isso a copia e aqui.
+let ownAnim = false
+const staticAnim = {
+  name: 'opengym-static-anim',
+  apply: 'build',
+  // So o build estatico (VITE_STATIC=1, frontend/.env.static) leva a midia no dist: no build local
+  // e no da imagem Docker o nginx serve catalogue/media inteiro, e no do app o stage-media.mjs faz
+  // a copia. E so quando a animacao vem da propria origem — apontada para um CDN, nao ha o que
+  // copiar. Os dois valores vem do arquivo de modo, que o Vite le para config.env e nao para
+  // process.env; ler so o process.env deixaria o deploy sem animacao sem reclamar nada.
+  configResolved(config) {
+    const env = { ...process.env, ...config.env }
+    ownAnim = !!env.VITE_STATIC && !env.VITE_ANIM_BASE
+  },
+  closeBundle() {
+    if (!ownAnim) return
+    const from = resolve(fileURLToPath(new URL('.', import.meta.url)), '../catalogue/media/anim')
+    // Um build sem a pasta (um clone raso, um fork que nao gerou as animacoes com
+    // scripts/catalogue/build-anim.mjs) sai com as miniaturas paradas, nao quebrado: o Thumb cai
+    // para a foto. Dizer isso aqui e o que evita descobrir pelo 404 em producao.
+    if (!existsSync(from)) {
+      console.warn('aviso: catalogue/media/anim nao existe — a lista de Exercicios sai sem animacao')
+      return
+    }
+    const to = join(outDir, 'exercise-media', 'anim')
+    cpSync(from, to, { recursive: true })
+    console.log('media: ' + readdirSync(to).length + ' animacoes -> exercise-media/anim')
+  }
+}
 // Optional web analytics (Umami). Injected only when BOTH vars are set at build time,
 // so a plain `npm run build` — and every self-hosted install — stays telemetry-free.
 // Set for the public instance: VITE_UMAMI_SRC=https://stats.example/script.js VITE_UMAMI_ID=<uuid>
@@ -102,7 +137,7 @@ const appVersion = process.env.APP_BUILD ? `${pkgVersion}+${process.env.APP_BUIL
 
 export default defineConfig({
   define: { __APP_VERSION__: JSON.stringify(appVersion) },
-  plugins: [react(), umami, flavor, swStamp, catalogueMedia],
+  plugins: [react(), umami, flavor, swStamp, catalogueMedia, staticAnim],
   base: './',
   server: {
     // The Coach's core (payload, validator, prompts, HTTP adapters) lives in ../api/coach/core
