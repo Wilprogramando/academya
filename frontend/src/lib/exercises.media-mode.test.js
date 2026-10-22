@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-/* De onde vem a midia dos exercicios (VITE_MEDIA). Tres modos, e cada um existe por um motivo:
-   'bundled' e o que roda local, self-hosted e — com as bases apontadas para um CDN, como no
-   frontend/.env.static — o site publicado (video + foto + animacao de lista, 100% do catalogo);
+/* De onde vem a midia dos exercicios (VITE_MEDIA). Quatro modos, e cada um existe por um motivo:
+   'bundled' e o que roda local e self-hosted (video + foto + animacao, 100% do catalogo);
+   'anim' e o site publicado (so o conjunto animado, 63 MB, na propria origem: o catalogo inteiro
+   animado sem depender de CDN de terceiro, e a animacao faz de foto);
    'free' sao fotos de dominio publico por CDN, so parte do catalogo e sem video, para quem nao
    puder publicar a midia da Gym visual (catalogue/media/NOTICE.md);
    'none' e o app sem midia nenhuma.
@@ -63,6 +64,32 @@ describe('VITE_MEDIA=free (site publico)', () => {
     // para mostrar a foto parada em vez do controle de pausa (Media.jsx).
     expect(gifSrc(EXIDX[Object.keys(FREE_MEDIA)[0]], 'male')).toBeNull()
     expect(gifSrc(withMedia(EXIDX), 'male')).toBeNull()
+  })
+})
+
+describe('VITE_MEDIA=anim (o deploy estatico, autossuficiente)', () => {
+  it('da a animacao a todo o catalogo, e ela mesma faz de foto', async () => {
+    vi.stubEnv('VITE_MEDIA', 'anim')
+    const { imgSrc, gifSrc, animSrc, CATALOGUE_MEDIA, EXIDX } = await fresh()
+    expect(CATALOGUE_MEDIA).toBe(true)
+    const ex = withMedia(EXIDX)
+    expect(animSrc(ex, 'male')).toMatch(/^exercise-media\/anim\/.+\.webp$/)
+    // A foto e a propria animacao: um WebP animado e uma imagem comum. Uma URL em still/ aqui
+    // seria 404 — esse build publica apenas anim/ (.vercelignore, vite.config.js).
+    expect(imgSrc(ex, 'male')).toBe(animSrc(ex, 'male'))
+    // E nenhum clipe: os MP4 nao sobem, e pedir um seria um 404 por exercicio.
+    expect(gifSrc(ex, 'male')).toBeNull()
+    // Nada de origem externa: o que a lista mostra nao pode depender de terceiro.
+    expect(imgSrc(ex, 'male')).not.toMatch(/^https?:/)
+  })
+
+  it('segue a figura escolhida e nao inventa URL para exercicio sem midia', async () => {
+    vi.stubEnv('VITE_MEDIA', 'anim')
+    const { imgSrc, animSrc, EXIDX } = await fresh()
+    const comFv = Object.values(EXIDX).find(e => e.img && e.fv)
+    expect(animSrc(comFv, 'female')).toBe('exercise-media/anim/' + comFv.fv + '.webp')
+    expect(animSrc({ id: 'c1' }, 'male')).toBeNull()
+    expect(imgSrc({ id: 'c1' }, 'male')).toBeNull()
   })
 })
 

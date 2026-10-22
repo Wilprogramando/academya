@@ -213,6 +213,12 @@ const drawing = (ex, figure) => (figure === 'female' ? ex.fv : figure === 'male'
 //                        (free-media-map.js). E o que o site publico usa, porque a midia da
 //                        Gym visual e licenciada para o openGym e nao pode ir num site de
 //                        terceiros (catalogue/media/NOTICE.md).
+//   'anim'             — so as animacoes de exercise-media/anim/ (WebP animado, 120 px, 63 MB o
+//                        conjunto), usadas tanto como animacao quanto como foto: um WebP animado
+//                        e uma imagem comum, que anima sozinha. E o que o deploy estatico usa, e
+//                        o motivo e nao depender de ninguem — o catalogo inteiro animado dentro
+//                        da propria origem, sem os 172 MB de clipe nem as fotos paradas, sem CDN
+//                        de terceiro e com tudo no cache do service worker.
 //   'none'             — nenhuma. O app trata cada exercicio como "sem midia".
 //
 // Apontar VITE_IMG_BASE / VITE_GIF_BASE / VITE_ANIM_BASE (um bucket com videos filmados na
@@ -232,6 +238,9 @@ export const CATALOGUE_MEDIA = MEDIA_MODE !== 'none'
 export const imgSrc = (ex, figure) => {
   if (MEDIA_MODE === 'none') return null
   if (MEDIA_MODE === 'free') return FREE_MEDIA[ex.id] ? FREE_BASE + FREE_MEDIA[ex.id] : null
+  // 'anim': a propria animacao faz de foto — e um WebP, uma imagem como qualquer outra. Assim a
+  // tela aberta do exercicio tambem anima sem o clipe MP4, que nao sobe nesse build.
+  if (MEDIA_MODE === 'anim') return animSrc(ex, figure)
   return IMG_BASE + (drawing(ex, figure) ? drawing(ex, figure) + '.webp' : ex.img)
 }
 // A animacao leve de cada exercicio: o WebP animado de exercise-media/anim/<id>.webp, 120 px e
@@ -241,7 +250,7 @@ export const imgSrc = (ex, figure) => {
 // MP4 (gifSrc) continua sendo o da tela aberta do exercicio, em tamanho cheio.
 const ANIM_BASE = ENV.VITE_ANIM_BASE || 'exercise-media/anim/'
 export const animSrc = (ex, figure) => {
-  if (MEDIA_MODE !== 'bundled' || !ex?.img) return null
+  if ((MEDIA_MODE !== 'bundled' && MEDIA_MODE !== 'anim') || !ex?.img) return null
   return ANIM_BASE + (drawing(ex, figure) || ex.id) + '.webp'
 }
 const clipFile = f => (CLIP_EXT !== '.mp4' && f.endsWith('.mp4') ? f.slice(0, -4) + CLIP_EXT : f)
