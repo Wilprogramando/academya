@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync, cpSync, readdirSync } from 'node:fs'
+import { readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -35,29 +35,6 @@ const catalogueMedia = {
   }
 }
 
-// O build estatico (VITE_MEDIA=anim, frontend/.env.static) mostra o catalogo animado com os WebP
-// animados de catalogue/media/anim — 49 MB em vez dos 172 MB de MP4 mais as fotos paradas. Eles
-// nao estao em public/ porque o build local e o da imagem Docker nao os querem no dist (o nginx
-// serve catalogue/media inteiro de qualquer modo), entao a copia acontece aqui, e so neste modo.
-let animMode = null
-const staticAnim = {
-  name: 'opengym-static-anim',
-  apply: 'build',
-  // O modo vem do arquivo de modo (.env.static), que o Vite le para config.env — nao para
-  // process.env; ler so o process.env deixaria o deploy sem midia sem reclamar de nada.
-  configResolved(config) { animMode = config.env.VITE_MEDIA || process.env.VITE_MEDIA },
-  closeBundle() {
-    if (animMode !== 'anim') return
-    const from = resolve(fileURLToPath(new URL('.', import.meta.url)), '../catalogue/media/anim')
-    if (!existsSync(from)) {
-      console.warn('VITE_MEDIA=anim: catalogue/media/anim nao existe — o build sai sem midia')
-      return
-    }
-    const to = join(outDir, 'exercise-media', 'anim')
-    cpSync(from, to, { recursive: true })
-    console.log('media: ' + readdirSync(to).length + ' animacoes -> exercise-media/anim')
-  }
-}
 // Optional web analytics (Umami). Injected only when BOTH vars are set at build time,
 // so a plain `npm run build` — and every self-hosted install — stays telemetry-free.
 // Set for the public instance: VITE_UMAMI_SRC=https://stats.example/script.js VITE_UMAMI_ID=<uuid>
@@ -125,7 +102,7 @@ const appVersion = process.env.APP_BUILD ? `${pkgVersion}+${process.env.APP_BUIL
 
 export default defineConfig({
   define: { __APP_VERSION__: JSON.stringify(appVersion) },
-  plugins: [react(), umami, flavor, swStamp, catalogueMedia, staticAnim],
+  plugins: [react(), umami, flavor, swStamp, catalogueMedia],
   base: './',
   server: {
     // The Coach's core (payload, validator, prompts, HTTP adapters) lives in ../api/coach/core
