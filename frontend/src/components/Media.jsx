@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { imgSrc, gifSrc, isVideoSrc, isCustomEx, figureOf } from '../lib/exercises.js'
+import { imgSrc, gifSrc, animSrc, isVideoSrc, isCustomEx, figureOf } from '../lib/exercises.js'
 import { MOBILE } from '../lib/mobile.js'
 import { useStore } from '../store/useStore.js'
 import { t, exerciseNameFor } from '../lib/i18n.js'
@@ -146,10 +146,18 @@ export function autoplayMuted(el) {
 export function Thumb(p) {
   return isCustomEx(p.ex) ? <CustomThumb {...p} /> : <BuiltinThumb {...p} />
 }
+// A miniatura anima: o WebP animado do exercicio (animSrc, ~8 KB) em vez da foto parada, para
+// que a lista de Exercicios mostre o movimento de cada um. E um <img> comum — ele mesmo faz o
+// loop, so carrega quando entra na tela (loading="lazy") e nao custa um player de video por
+// linha. Se a animacao nao existir ou falhar, cai para a foto parada; se essa tambem falhar, o
+// tile neutro (#281). A falha e lembrada por arquivo, para que uma lista que re-renderiza nao
+// pergunte de novo; um exercicio novo no mesmo lugar tenta o seu.
 function BuiltinThumb({ ex }) {
   const body = useStore(s => figureOf(s.S))
-  const src = ex.img ? imgSrc(ex, body) : null
-  const [broken, setBroken] = useState(null)
-  if (!src || broken === src) return <div className="thumb thumb-x"><Icon name="dumbbell" /></div>
-  return <img className="thumb" loading="lazy" decoding="async" draggable={false} src={src} alt="" onError={() => setBroken(src)} />
+  const still = ex.img ? imgSrc(ex, body) : null
+  const anim = animSrc(ex, body)
+  const [broken, setBroken] = useState([])
+  const src = [anim, still].find(u => u && !broken.includes(u)) || null
+  if (!src) return <div className="thumb thumb-x"><Icon name="dumbbell" /></div>
+  return <img className="thumb" loading="lazy" decoding="async" draggable={false} src={src} alt="" onError={() => setBroken(b => (b.includes(src) ? b : [...b, src]))} />
 }

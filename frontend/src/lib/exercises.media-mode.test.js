@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-/* De onde vem a midia dos exercicios (VITE_MEDIA). Tres modos, e cada um existe por um motivo:
+/* De onde vem a midia dos exercicios (VITE_MEDIA). Quatro modos, e cada um existe por um motivo:
    'bundled' e o que roda local e self-hosted (video + foto da Gym visual, 100% do catalogo);
-   'free' e o site publico (fotos de dominio publico por CDN, so parte do catalogo, sem video),
-   porque a midia da Gym visual e licenciada para o openGym e nao pode ir num site de terceiros;
+   'anim' e o deploy estatico (so os WebP animados, 49 MB, 100% do catalogo animado, e a propria
+   animacao faz de foto); 'free' sao fotos de dominio publico por CDN, so parte do catalogo e sem
+   video, para quem nao puder publicar a midia da Gym visual (catalogue/media/NOTICE.md);
    'none' e o app sem midia nenhuma.
 
    O que estes testes prendem e o contrato que as telas assumem: uma URL que nao existe nunca e
@@ -62,6 +63,28 @@ describe('VITE_MEDIA=free (site publico)', () => {
     // para mostrar a foto parada em vez do controle de pausa (Media.jsx).
     expect(gifSrc(EXIDX[Object.keys(FREE_MEDIA)[0]], 'male')).toBeNull()
     expect(gifSrc(withMedia(EXIDX), 'male')).toBeNull()
+  })
+})
+
+describe('VITE_MEDIA=anim (deploy estatico)', () => {
+  it('da a animacao leve a todo o catalogo, e ela mesma faz de foto', async () => {
+    vi.stubEnv('VITE_MEDIA', 'anim')
+    const { imgSrc, gifSrc, animSrc, CATALOGUE_MEDIA, EXIDX } = await fresh()
+    expect(CATALOGUE_MEDIA).toBe(true)
+    const ex = withMedia(EXIDX)
+    expect(animSrc(ex, 'male')).toMatch(/^exercise-media\/anim\/.+\.webp$/)
+    // A foto e a propria animacao: um WebP animado e uma imagem comum. Uma URL em still/ aqui
+    // seria 404 — o deploy estatico publica apenas anim/ (.vercelignore).
+    expect(imgSrc(ex, 'male')).toBe(animSrc(ex, 'male'))
+    // E nenhum clipe: os MP4 nao sobem, e pedir um seria 404 por exercicio.
+    expect(gifSrc(ex, 'male')).toBeNull()
+  })
+
+  it('nao tem animacao para um exercicio sem midia', async () => {
+    vi.stubEnv('VITE_MEDIA', 'anim')
+    const { imgSrc, animSrc } = await fresh()
+    expect(animSrc({ id: 'c1' }, 'male')).toBeNull()
+    expect(imgSrc({ id: 'c1' }, 'male')).toBeNull()
   })
 })
 

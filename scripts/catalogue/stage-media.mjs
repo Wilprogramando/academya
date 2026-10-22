@@ -37,5 +37,8 @@ const copyDir = (from, to, ext) => {
 const dest = path.join(out, 'exercise-media')
 const stills = copyDir(path.join(media, 'still'), path.join(dest, 'still'), '.webp')
 const clips = copyDir(appDir || path.join(media, 'clip'), path.join(dest, 'clip'), clipExt)
+// As animacoes leves da lista de Exercicios (WebP animado, uma por exercicio): sempre as do
+// repositorio, mesmo num build de app, porque e a lista que as usa e o tamanho delas e o ponto.
+const anims = fs.existsSync(path.join(media, 'anim')) ? copyDir(path.join(media, 'anim'), path.join(dest, 'anim'), '.webp') : 0
 fs.copyFileSync(path.join(media, 'NOTICE.md'), path.join(dest, 'NOTICE.md'))
-console.log(`media: ${stills} stills, ${clips} animations${appDir ? ' (app size)' : ''} -> ${path.relative(ROOT, out) || out}`)
+console.log(`media: ${stills} stills, ${clips} animations, ${anims} list animations${appDir ? ' (app size)' : ''} -> ${path.relative(ROOT, out) || out}`)

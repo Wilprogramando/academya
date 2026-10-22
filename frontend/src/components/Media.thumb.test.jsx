@@ -5,8 +5,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
-// A still that will not load (offline and never cached, a lapsed session on a gated instance)
-// gets the neutral tile an exercise without media has, not the browser's broken-image glyph (#281).
+// A miniatura mostra a animacao do exercicio; se ela nao carregar (offline e nunca em cache, uma
+// sessao vencida numa instancia fechada), cai para a foto parada, e se essa tambem falhar, para o
+// tile neutro de um exercicio sem midia — nunca o icone de imagem quebrada do navegador (#281).
 vi.mock('../store/useStore.js', () => ({ useStore: () => null }))
 const { Thumb } = await import('./Media.jsx')
 
@@ -22,20 +23,23 @@ function mount(el) {
 afterEach(() => { act(() => { mounted.splice(0).forEach(({ root, host }) => { root.unmount(); host.remove() }) }) })
 
 describe('Thumb', () => {
-  it('shows the still, and the neutral tile once it fails to load', () => {
+  it('animates, falls back to the still, then to the neutral tile', () => {
     const { host } = mount(<Thumb ex={{ id: 'a', img: 'a.jpg' }} />)
     const img = host.querySelector('img.thumb')
-    expect(img.getAttribute('src')).toMatch(/a\.jpg$/)
+    expect(img.getAttribute('src')).toBe('exercise-media/anim/a.webp')
     act(() => { img.dispatchEvent(new Event('error')) })
+    expect(host.querySelector('img.thumb').getAttribute('src')).toMatch(/a\.jpg$/)
+    act(() => { host.querySelector('img.thumb').dispatchEvent(new Event('error')) })
     expect(host.querySelector('img')).toBeNull()
     expect(host.querySelector('.thumb.thumb-x')).toBeTruthy()
   })
 
-  it('another exercise in the same place tries its own still', () => {
+  it('another exercise in the same place tries its own media', () => {
     const { host, root } = mount(<Thumb ex={{ id: 'a', img: 'a.jpg' }} />)
     act(() => { host.querySelector('img').dispatchEvent(new Event('error')) })
+    act(() => { host.querySelector('img').dispatchEvent(new Event('error')) })
     act(() => root.render(<Thumb ex={{ id: 'b', img: 'b.jpg' }} />))
-    expect(host.querySelector('img.thumb').getAttribute('src')).toMatch(/b\.jpg$/)
+    expect(host.querySelector('img.thumb').getAttribute('src')).toBe('exercise-media/anim/b.webp')
   })
 
   it('an exercise without media has the tile from the start', () => {
