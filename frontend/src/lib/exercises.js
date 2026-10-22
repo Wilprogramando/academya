@@ -203,7 +203,11 @@ const drawing = (ex, figure) => (figure === 'female' ? ex.fv : figure === 'male'
 // requisicoes perdidas e uma piscada por exercicio, mais o prefetch do service worker enchendo o
 // cache de erros. Devolvendo null, quem consome ja trata como "exercicio sem midia", um estado
 // que o app sempre teve (ver Media.jsx) e sabe desenhar.
-export const CATALOGUE_MEDIA = ENV.VITE_MEDIA !== 'none'
+// Apontar uma origem propria (VITE_IMG_BASE / VITE_GIF_BASE, ex.: um bucket com videos filmados
+// na academia) religa a midia por si so. Sem isso o VITE_MEDIA=none do .env.static continuaria
+// mandando e a midia nova nao apareceria — com a origem configurada e certa, o que e uma pegadinha
+// que custaria uma tarde para achar.
+export const CATALOGUE_MEDIA = ENV.VITE_MEDIA !== 'none' || !!(ENV.VITE_IMG_BASE || ENV.VITE_GIF_BASE)
 export const imgSrc = (ex, figure) => CATALOGUE_MEDIA
   ? IMG_BASE + (drawing(ex, figure) ? drawing(ex, figure) + '.webp' : ex.img)
   : null

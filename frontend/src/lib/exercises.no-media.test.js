@@ -34,6 +34,18 @@ describe('build sem a midia do catalogo', () => {
     }
   })
 
+  it('apontar uma origem propria religa a midia, mesmo com VITE_MEDIA=none', async () => {
+    // O caso real: o .env.static traz VITE_MEDIA=none, e depois alguem configura no Vercel um
+    // bucket com os videos proprios. A origem configurada tem de ganhar do padrao do arquivo.
+    vi.stubEnv('VITE_MEDIA', 'none')
+    vi.stubEnv('VITE_GIF_BASE', 'https://midia.example/clip/')
+    const { gifSrc, imgSrc, CATALOGUE_MEDIA, EXIDX } = await freshExercises()
+    expect(CATALOGUE_MEDIA).toBe(true)
+    const ex = Object.values(EXIDX).find(e => e.img && e.gif)
+    expect(gifSrc(ex, 'male')).toMatch(/^https:\/\/midia\.example\/clip\/.+\.mp4$/)
+    expect(imgSrc(ex, 'male')).toBeTruthy()
+  })
+
   it('o build normal segue intocado: as URLs continuam saindo', async () => {
     const { imgSrc, gifSrc, CATALOGUE_MEDIA, EXIDX } = await freshExercises()
     expect(CATALOGUE_MEDIA).toBe(true)
