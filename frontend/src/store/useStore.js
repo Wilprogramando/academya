@@ -241,15 +241,21 @@ export const DEF = {
 const clone = o => JSON.parse(JSON.stringify(o))
 
 // First run on a device whose language renders right-to-left starts in that language
-// rather than English; the boot script in index.html mirrors this check for the
-// pre-paint direction. The choice is persisted like any other setting once the user
+// rather than in this build's default; the boot script in index.html mirrors this check for
+// the pre-paint direction. The choice is persisted like any other setting once the user
 // picks a language.
+//
+// This build is Portuguese-first, so pt-BR is the fallback rather than 'en'. It only decides
+// the FIRST paint of a copy nobody has configured: the instance's DEFAULT_LANG and then the
+// browser's own languages still get the last word through lib/default-lang.js, because a
+// fresh copy is marked `langAuto` — and a language picked in Settings beats all of them.
+const FALLBACK_LANG = 'pt-BR'
 const detectedLang = () => {
   try {
     const base = (navigator.language || '').toLowerCase().split('-')[0]
     if (RTL_LANGS.has(base)) return base
   } catch (e) { /* ignore */ }
-  return 'en'
+  return FALLBACK_LANG
 }
 
 // A copy started from nothing on this device. `langAuto` marks its language as one nobody has

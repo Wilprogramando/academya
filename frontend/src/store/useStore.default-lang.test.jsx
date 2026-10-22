@@ -31,7 +31,8 @@ describe('instance default language', () => {
 
   it('a fresh copy is shown in DEFAULT_LANG once the config is in, and its state is left alone', async () => {
     useStore.setState({ S: freshState() })
-    expect(shown()).toBe('en')   // nothing to go on before the config
+    // Nothing to go on before the config: the build's own fallback (pt-BR, see detectedLang).
+    expect(shown()).toBe('pt-BR')
     const before = clone(useStore.getState().S)
 
     api.mockResolvedValueOnce({ invite_only: false, allow_guest: true, default_lang: 'pt-BR' })
